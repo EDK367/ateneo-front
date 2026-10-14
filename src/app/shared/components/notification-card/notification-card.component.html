@@ -1,0 +1,26 @@
+<div class="notifications-container" aria-live="polite">
+  @for (notif of notifications(); track notif.id) {
+    <div class="simple-card" [ngClass]="'card-' + notif.type">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span class="card-icon">
+            @switch (notif.type) {
+              @case ('success') { ✅ }
+              @case ('error') { ⚠️ }
+              @case ('warning') { 🔔 }
+              @default { ℹ️ }
+            }
+          </span>
+          <span class="card-title">{{ notif.title }}</span>
+        </div>
+        <button type="button" class="card-close" (click)="dismiss(notif.id)" aria-label="Cerrar">&times;</button>
+      </div>
+      <div class="card-body">
+        <p class="card-message">{{ notif.message }}</p>
+      </div>
+      <div class="card-footer">
+        <span class="card-time">{{ notif.timestamp | date:'shortTime' }}</span>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,21 @@
+<header class="header">
+    <div class="container">
+        <div class="logo">
+            <img class="logo-img" src="assets/img/ateneo_logo.png" alt="ateneo_logo">
+        </div>
+        <button class="hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+        <nav class="nav" [class.active]="isMenuOpen">
+            <ul class="nav-list">
+                <li class="nav-item">
+                    <button class="theme-toggle" (click)="toggleTheme()">
+                        {{ isDarkMode ? '☀️🌑' : '🌙🌕' }}
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</header>

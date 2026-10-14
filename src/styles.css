@@ -1,3 +1,51 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+:root {
+  --color-primary: #06B6D4;
+  --color-secondary: #FB923C;
+  --color-accent-1: #A855F7;
+  --color-accent-2: #10B981;
+  --color-accent-3: #3B82F6;
+
+  --color-bg-light: #0B1220;
+  --color-bg-soft: #111827;
+
+  --color-text-main: #F1F5F9;
+  --color-text-muted: #94A3B8;
+
+  --bg-gradient-start: #0F172A;
+  --bg-gradient-end: #0B1220;
+
+  --shadow-soft: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+body.light-theme {
+  --color-primary: #0891B2;
+  --color-secondary: #EA580C;
+  --color-accent-1: #7C3AED;
+  --color-accent-2: #059669;
+  --color-accent-3: #2563EB;
+
+  --color-bg-light: #F8FAFC;
+  --color-bg-soft: #FFFFFF;
+
+  --color-text-main: #0F172A;
+  --color-text-muted: #64748B;
+
+  --bg-gradient-start: #F0F9FF;
+  --bg-gradient-end: #F8FAFC;
+
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+body {
+  background-color: var(--color-bg-light);
+  color: var(--color-text-main);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+html, body { height: 100%; }
+body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
