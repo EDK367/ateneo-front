@@ -1,27 +1,36 @@
-.header {
-    background-color: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(15px);
-    position: fixed;
+:host {
+    display: block;
     width: 100%;
-    top: 0;
-    z-index: 1000;
-    box-shadow: var(--shadow-soft);
-    padding: 1rem 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    flex-shrink: 0;
 }
 
-body.light-theme .header {
-    background-color: rgba(255, 255, 255, 0.8);
-    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+.header {
+    background-color: var(--color-bg-soft);
+    backdrop-filter: blur(15px);
+    width: 100%;
+    box-shadow: var(--shadow-soft);
+    padding: 0.75rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-text-main) 10%, transparent);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+    box-sizing: border-box;
+}
+
+.header.panel-header {
+    padding: 0.65rem 0;
 }
 
 .container {
     margin: 0 auto;
-    padding: 0 3rem;
+    padding: 0 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.container.panel-container {
+    padding: 0 1.5rem;
 }
 
 .logo {
@@ -30,62 +39,50 @@ body.light-theme .header {
 }
 
 .logo-img {
-    width: 75px;
-    height: 75px;
+    width: 55px;
+    height: 55px;
 }
 
-.logo-text {
-    font-size: 1.8rem;
-    font-weight: 800;
-    background: linear-gradient(45deg, var(--color-primary), var(--color-secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-transform: uppercase;
-    letter-spacing: 2px;
+.panel-info {
+    display: flex;
+    align-items: center;
+}
+
+.panel-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-main);
+    letter-spacing: -0.01em;
 }
 
 .nav-list {
     display: flex;
     list-style: none;
-    gap: 2rem;
+    gap: 1.5rem;
     margin: 0;
     padding: 0;
     align-items: center;
 }
 
-.nav-link {
-    text-decoration: none;
-    color: var(--color-text-main);
-    font-weight: 600;
-    transition: color 0.3s ease;
-    font-size: 1rem;
-    cursor: pointer;
-}
-
-.nav-link:hover {
-    color: var(--color-primary);
-}
-
 .theme-toggle {
-    background: none;
-    border: none;
+    background: color-mix(in srgb, var(--color-text-main) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-text-main) 12%, transparent);
+    color: var(--color-text-main);
     cursor: pointer;
-    font-size: 1.2rem;
-    padding: 0.5rem;
-    border-radius: 50%;
-    transition: background-color 0.3s ease, transform 0.3s ease;
+    font-size: 1.15rem;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
 .theme-toggle:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-    transform: rotate(15deg);
-}
-
-body.dark-theme .theme-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--color-primary) 15%, transparent);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
 }
 
 .hamburger {
@@ -102,66 +99,4 @@ body.dark-theme .theme-toggle:hover {
     margin: 5px auto;
     transition: all 0.3s ease-in-out;
     background-color: var(--color-text-main);
-}
-
-@media (max-width: 768px) {
-    .container {
-        padding: 0 1.5rem;
-    }
-
-    .hamburger {
-        display: block;
-        z-index: 1001;
-    }
-
-    .hamburger.active .bar:nth-child(2) {
-        opacity: 0;
-    }
-
-    .hamburger.active .bar:nth-child(1) {
-        transform: translateY(8px) rotate(45deg);
-    }
-
-    .hamburger.active .bar:nth-child(3) {
-        transform: translateY(-8px) rotate(-45deg);
-    }
-
-    .nav {
-        position: fixed;
-        left: -100%;
-        top: 0;
-        gap: 0;
-        flex-direction: column;
-        background-color: rgba(0, 0, 0, 0.95);
-        width: 100%;
-        height: 100vh;
-        text-align: center;
-        transition: 0.3s;
-        z-index: 1000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        backdrop-filter: blur(10px);
-    }
-
-    body.light-theme .nav {
-        background-color: rgba(255, 255, 255, 0.95);
-    }
-
-    .nav.active {
-        left: 0;
-    }
-
-    .nav-list {
-        flex-direction: column;
-        gap: 2rem;
-    }
-
-    .nav-item {
-        margin: 16px 0;
-    }
-
-    .nav-link {
-        font-size: 1.5rem;
-    }
 }

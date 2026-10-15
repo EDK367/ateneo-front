@@ -1,18 +1,21 @@
-<header class="header">
-    <div class="container">
-        <div class="logo">
-            <img class="logo-img" src="assets/img/ateneo_logo.png" alt="ateneo_logo">
-        </div>
-        <button class="hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
-        </button>
+<header class="header" [class.panel-header]="isPanel()">
+    <div class="container" [class.panel-container]="isPanel()">
+        @if (!isPanel()) {
+            <div class="logo">
+                <img class="logo-img" src="assets/img/ateneo_logo.png" alt="ateneo_logo">
+            </div>
+            <button class="hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen">
+            </button>
+        } @else {
+            <div class="panel-info">
+                <span class="panel-title">Panel de Control</span>
+            </div>
+        }
         <nav class="nav" [class.active]="isMenuOpen">
             <ul class="nav-list">
                 <li class="nav-item">
-                    <button class="theme-toggle" (click)="toggleTheme()">
-                        {{ isDarkMode ? '☀️🌑' : '🌙🌕' }}
+                    <button class="theme-toggle" (click)="toggleTheme()" [attr.aria-label]="isDarkMode ? 'Modo claro' : 'Modo oscuro'">
+                        {{ isDarkMode ? '☀️' : '🌙' }}
                     </button>
                 </li>
             </ul>

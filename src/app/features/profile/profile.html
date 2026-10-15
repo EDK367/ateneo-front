@@ -1,0 +1,70 @@
+<div class="profile-container">
+  <header class="page-header">
+    <div class="header-titles">
+      <h1 class="page-title">Mi Perfil</h1>
+    </div>
+  </header>
+
+  @if (loading && !user) {
+    <mat-card class="state-card" appearance="outlined">
+      <mat-card-content class="loading-state">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Cargando información del perfil...</p>
+      </mat-card-content>
+    </mat-card>
+  } @else if (errorMessage && !user) {
+    <mat-card class="state-card" appearance="outlined">
+      <mat-card-content class="error-state">
+        <mat-icon color="warn" class="error-icon">error_outline</mat-icon>
+        <h3>No se pudo cargar el perfil</h3>
+        <p>{{ errorMessage }}</p>
+        <button mat-flat-button color="primary" (click)="loadProfile()">Reintentar</button>
+      </mat-card-content>
+    </mat-card>
+  } @else if (user) {
+    <div class="profile-layout">
+      <mat-card class="hero-card" appearance="outlined">
+        <mat-card-content class="hero-content">
+          <div class="hero-avatar">
+            <span>{{ userInitials }}</span>
+          </div>
+          <div class="hero-text">
+            <h2 class="hero-name">{{ user.username }}</h2>
+            <p class="hero-username">&#64;{{ user.username }}</p>
+            <p class="hero-email">
+              <mat-icon class="inline-icon">email</mat-icon>
+              {{ user.email }}
+            </p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <div class="details-grid">
+        <mat-card class="info-card" appearance="outlined">
+          <mat-card-header>
+            <mat-icon mat-card-avatar color="primary">account_circle</mat-icon>
+            <mat-card-title>Datos Personales y de Cuenta</mat-card-title>
+          </mat-card-header>
+          <mat-card-content class="card-content-grid">
+            <div class="data-field">
+              <span class="field-label">Nombre de usuario</span>
+              <span class="field-value code">&#64;{{ user.username }}</span>
+            </div>
+            <div class="data-field">
+              <span class="field-label">Correo electrónico</span>
+              <span class="field-value">{{ user.email }}</span>
+            </div>
+            <div class="data-field">
+              <span class="field-label">Rol</span>
+              <span class="field-value badge-emp">{{ roleDisplayName }}</span>
+            </div>
+            <div class="data-field full-width">
+              <span class="field-label">Identificador único (UUID)</span>
+              <span class="field-value code">{{ user.userId }}</span>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  }
+</div>

@@ -1,17 +1,26 @@
+:host {
+    display: block;
+    width: 100%;
+    flex-shrink: 0;
+}
+
 .footer {
     background-color: var(--color-bg-soft);
-    padding: 1.5rem 0;
-    margin-top: auto;
+    border-top: 1px solid color-mix(in srgb, var(--color-text-main) 10%, transparent);
+    padding: 0.65rem 1.5rem;
+    box-sizing: border-box;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .container {
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0;
     text-align: center;
 }
 
 .footer p {
-    color: var(--color-text-dark);
-    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    font-size: 0.78rem;
     margin: 0;
+    letter-spacing: 0.02em;
 }

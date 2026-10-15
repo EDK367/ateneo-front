@@ -1,5 +1,6 @@
 import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth';
 import { NotificationService } from '../../../core/services/config/notification';
 import { TokenService } from '../../../core/services/config/token';
@@ -35,7 +36,8 @@ export class Login implements OnInit {
     private authService: AuthService,
     private notificationService: NotificationService,
     private tokenService: TokenService,
-    private sessionService: SessionService
+    private sessionService: SessionService,
+    private router: Router
   ) { }
 
   ngOnInit() {
@@ -73,9 +75,12 @@ export class Login implements OnInit {
           next: (profile) => {
             this.sessionService.saveUser(profile);
             this.notificationService.showSuccess(`¡Bienvenido, ${profile.username}!`, 'Bienvenido');
+            const target = profile.role === 'admin' ? '/admin/profile' : '/user/profile';
+            this.router.navigate([target]);
           },
           error: () => {
             this.notificationService.showSuccess(`¡Bienvenido, ${this.loginForm.user}!`, 'Bienvenido');
+            this.router.navigate(['/admin/profile']);
           }
         });
       },

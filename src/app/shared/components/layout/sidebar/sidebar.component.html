@@ -1,0 +1,70 @@
+<aside class="sidebar-container">
+  <div class="sidebar-header">
+    <div class="brand-text">
+      <img src="assets/img/ateneo_logo.png" alt="Logo Ateneo" class="logo">
+      <h1>Ateno</h1>
+    </div>
+  </div>
+
+  @if (menuConfig().showActionBtn) {
+    <div class="action-btn-wrapper">
+      <a mat-flat-button 
+         [routerLink]="menuConfig().actionBtnRoute" 
+         class="btn-action">
+        <mat-icon>add</mat-icon>
+        <span>{{ menuConfig().actionBtnLabel }}</span>
+      </a>
+    </div>
+  }
+
+  <nav class="sidebar-nav">
+    @for (section of menuConfig().sections; track section.title) {
+      <div class="menu-section">
+        <span class="section-title">{{ section.title }}</span>
+        
+        <mat-nav-list class="menu-list">
+          @for (item of section.items; track item.route) {
+            <a mat-list-item 
+               [routerLink]="item.route" 
+               routerLinkActive="active" 
+               (click)="onMenuClick(item.route)"
+               class="menu-link">
+              
+              <mat-icon matListItemIcon>
+                @switch (item.icon) {
+                  @case ('grid') { dashboard }
+                  @case ('box') { folder }
+                  @case ('shapes') { category }
+                  @case ('truck') { local_shipping }
+                  @case ('cart') { shopping_cart }
+                  @case ('warehouse') { warehouse }
+                  @case ('users') { people }
+                  @case ('receipt') { description }
+                  @case ('chart') { bar_chart }
+                  @case ('shield') { security }
+                  @case ('user-gear') { manage_accounts }
+                  @case ('user') { person }
+                  @case ('gear') { settings }
+                  @default { circle }
+                }
+              </mat-icon>
+
+              <span matListItemTitle class="link-label">{{ item.label }}</span>
+
+              @if (item.badge) {
+                <mat-chip matListItemMeta class="item-badge">{{ item.badge }}</mat-chip>
+              }
+            </a>
+          }
+        </mat-nav-list>
+      </div>
+    }
+  </nav>
+
+  <div class="sidebar-footer">
+    <button mat-button (click)="onLogout()" class="btn-logout">
+      <mat-icon>logout</mat-icon>
+      <span>Cerrar Sesión</span>
+    </button>
+  </div>
+</aside>

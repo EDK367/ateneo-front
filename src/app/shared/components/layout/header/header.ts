@@ -1,5 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-header',
@@ -9,14 +10,19 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./header.css']
 })
 export class HeaderComponent implements OnInit {
+  
+  private router = inject(Router);
+
   isMenuOpen = false;
   isDarkMode = true;
 
-
-  constructor(
-  ) { }
+  readonly isPanel = computed(() => {
+    const url = this.router.url;
+    return url.startsWith('/admin') || url.startsWith('/user');
+  });
 
   ngOnInit() {
+    this.isDarkMode = !document.body.classList.contains('light-theme');
   }
 
   toggleMenu() {
