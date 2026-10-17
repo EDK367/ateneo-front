@@ -37,7 +37,42 @@ export const routes: Routes = [
         pathMatch: 'full'
       },
       {
+        path: 'shared',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
+        path: 'trash',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
         path: 'audit-logs',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
+        path: 'activity',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
+        path: 'reports',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
+        path: 'reports/storage',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
+        path: 'reports/users',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
+        path: 'reports/activity',
         redirectTo: 'profile',
         pathMatch: 'full'
       },
@@ -80,6 +115,16 @@ export const routes: Routes = [
       },
       {
         path: 'shared',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
+        path: 'trash',
+        redirectTo: 'profile',
+        pathMatch: 'full'
+      },
+      {
+        path: 'activity',
         redirectTo: 'profile',
         pathMatch: 'full'
       },

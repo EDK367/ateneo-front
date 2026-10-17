@@ -1,18 +1,31 @@
-<aside class="sidebar-container">
+<aside class="sidebar-container" [class.collapsed]="isCollapsed()">
   <div class="sidebar-header">
     <div class="brand-text">
       <img src="assets/img/ateneo_logo.png" alt="Logo Ateneo" class="logo">
-      <h1>Ateno</h1>
+      @if (!isCollapsed()) {
+        <h1>Ateneo</h1>
+      }
     </div>
+    <button type="button" 
+            class="btn-toggle-size" 
+            (click)="toggleCollapse()" 
+            [matTooltip]="isCollapsed() ? 'Expandir barra lateral' : 'Contraer barra lateral'"
+            matTooltipPosition="right">
+      <mat-icon>{{ isCollapsed() ? 'menu' : 'menu_open' }}</mat-icon>
+    </button>
   </div>
 
   @if (menuConfig().showActionBtn) {
     <div class="action-btn-wrapper">
       <a mat-flat-button 
          [routerLink]="menuConfig().actionBtnRoute" 
-         class="btn-action">
+         class="btn-action"
+         [matTooltip]="isCollapsed() ? (menuConfig().actionBtnLabel ?? '') : ''"
+         matTooltipPosition="right">
         <mat-icon>add</mat-icon>
-        <span>{{ menuConfig().actionBtnLabel }}</span>
+        @if (!isCollapsed()) {
+          <span>{{ menuConfig().actionBtnLabel }}</span>
+        }
       </a>
     </div>
   }
@@ -20,7 +33,13 @@
   <nav class="sidebar-nav">
     @for (section of menuConfig().sections; track section.title) {
       <div class="menu-section">
-        <span class="section-title">{{ section.title }}</span>
+        @if (section.title) {
+          @if (!isCollapsed()) {
+            <span class="section-title">{{ section.title }}</span>
+          } @else {
+            <div class="section-divider"></div>
+          }
+        }
         
         <mat-nav-list class="menu-list">
           @for (item of section.items; track item.route) {
@@ -28,7 +47,9 @@
                [routerLink]="item.route" 
                routerLinkActive="active" 
                (click)="onMenuClick(item.route)"
-               class="menu-link">
+               class="menu-link"
+               [matTooltip]="isCollapsed() ? item.label : ''"
+               matTooltipPosition="right">
               
               <mat-icon matListItemIcon>
                 @switch (item.icon) {
@@ -45,13 +66,18 @@
                   @case ('user-gear') { manage_accounts }
                   @case ('user') { person }
                   @case ('gear') { settings }
+                  @case ('trash') { delete }
+                  @case ('history') { history }
+                  @case ('share') { share }
                   @default { circle }
                 }
               </mat-icon>
 
-              <span matListItemTitle class="link-label">{{ item.label }}</span>
+              @if (!isCollapsed()) {
+                <span matListItemTitle class="link-label">{{ item.label }}</span>
+              }
 
-              @if (item.badge) {
+              @if (!isCollapsed() && item.badge) {
                 <mat-chip matListItemMeta class="item-badge">{{ item.badge }}</mat-chip>
               }
             </a>
@@ -62,9 +88,24 @@
   </nav>
 
   <div class="sidebar-footer">
-    <button mat-button (click)="onLogout()" class="btn-logout">
+    <button mat-button 
+            (click)="onLogout()" 
+            class="btn-logout"
+            [matTooltip]="isCollapsed() ? 'Cerrar Sesión' : ''"
+            matTooltipPosition="right">
       <mat-icon>logout</mat-icon>
-      <span>Cerrar Sesión</span>
+      @if (!isCollapsed()) {
+        <span>Cerrar Sesión</span>
+      }
     </button>
   </div>
+
+  @if (!isCollapsed()) {
+    <div class="resize-handle" 
+         (mousedown)="onResizeStart($event)" 
+         (dblclick)="resetWidth($event)"
+         title="Arrastra para redimensionar (doble clic para restaurar)">
+      <div class="resize-indicator"></div>
+    </div>
+  }
 </aside>

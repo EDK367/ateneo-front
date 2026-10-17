@@ -23,73 +23,63 @@ export const ROLE_MENUS: Record<string, RoleMenuConfig> = {
       {
         title: '',
         items: [
-          { label: 'Dashboard', icon: 'grid', route: '/admin/dashboard' },
-          { label: 'Mi Perfil', icon: 'user', route: '/admin/profile' },
-          { label: 'Documentos', icon: 'box', route: '/admin/documents' },
-          { label: 'Usuarios', icon: 'users', route: '/admin/users' },
-          { label: 'Auditoría', icon: 'shield', route: '/admin/audit-logs' }
+          { label: 'Pagina Principal', icon: 'grid', route: '/admin/dashboard' },
+          { label: 'Documentos Globales', icon: 'box', route: '/admin/documents' }
         ]
       },
       {
-        title: '',
+        title: 'Administración',
         items: [
-          
+          { label: 'Gestión de Usuarios', icon: 'user-gear', route: '/admin/users' },
+          { label: 'Recursos Compartidos', icon: 'users', route: '/admin/shared' },
+          { label: 'Papelera Global', icon: 'trash', route: '/admin/trash' },
+          { label: 'Auditoría y Actividad', icon: 'shield', route: '/admin/audit-logs' }
+        ]
+      },
+      {
+        title: 'Reportes',
+        items: [
+          { label: 'Módulo de Reportes', icon: 'chart', route: '/admin/reports' },
+          { label: 'Archivos y Almacenamiento', icon: 'receipt', route: '/admin/reports/storage' },
+          { label: 'Usuarios y Compartición', icon: 'shapes', route: '/admin/reports/users' },
+          { label: 'Actividad del Sistema', icon: 'history', route: '/admin/reports/activity' }
+        ]
+      },
+      {
+        title: 'Mi Cuenta',
+        items: [
+          { label: 'Mi Perfil', icon: 'user', route: '/admin/profile' },
+          { label: 'Ajustes', icon: 'gear', route: '/admin/settings' }
         ]
       }
     ]
   },
   user: {
-    showActionBtn: true,
-    actionBtnLabel: 'Subir Documento',
-    actionBtnRoute: '/user/documents',
     sections: [
       {
-        title: 'PRINCIPAL',
+        title: '',
         items: [
-          { label: 'Dashboard', icon: 'grid', route: '/user/dashboard' },
-          { label: 'Mi Perfil', icon: 'user', route: '/user/profile' }
+          { label: 'Pagina Principal', icon: 'grid', route: '/user/dashboard' },
+          { label: 'Mi Unidad', icon: 'box', route: '/user/documents' }
         ]
       },
       {
-        title: 'DOCUMENTOS',
+        title: 'Documentos',
         items: [
-          { label: 'Mis Archivos', icon: 'box', route: '/user/documents' },
-          { label: 'Compartidos', icon: 'users', route: '/user/shared' }
+          { label: 'Compartidos', icon: 'users', route: '/user/shared' },
+          { label: 'Papelera', icon: 'trash', route: '/user/trash' },
+          { label: 'Historial de Actividad', icon: 'history', route: '/user/activity' }
         ]
       },
       {
-        title: 'CONFIGURACIÓN',
+        title: 'Mi Cuenta',
         items: [
-          { label: 'Ajustes', icon: 'gear', route: '/user/settings' }
-        ]
-      }
-    ]
-  },
-  usuario: {
-    showActionBtn: true,
-    actionBtnLabel: 'Subir Documento',
-    actionBtnRoute: '/user/documents',
-    sections: [
-      {
-        title: 'PRINCIPAL',
-        items: [
-          { label: 'Dashboard', icon: 'grid', route: '/user/dashboard' },
-          { label: 'Mi Perfil', icon: 'user', route: '/user/profile' }
-        ]
-      },
-      {
-        title: 'DOCUMENTOS',
-        items: [
-          { label: 'Mis Archivos', icon: 'box', route: '/user/documents' },
-          { label: 'Compartidos', icon: 'users', route: '/user/shared' }
-        ]
-      },
-      {
-        title: 'CONFIGURACIÓN',
-        items: [
+          { label: 'Mi Perfil', icon: 'user', route: '/user/profile' },
           { label: 'Ajustes', icon: 'gear', route: '/user/settings' }
         ]
       }
     ]
   }
 };
+
+ROLE_MENUS['usuario'] = ROLE_MENUS['user'];
