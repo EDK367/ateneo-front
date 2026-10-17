@@ -11,6 +11,17 @@ export interface SharedUser {
   email: string;
 }
 
+export interface CreateShareRequest {
+  resourceType: ShareResourceType;
+  resourceId: string;
+  sharedWithId: string;
+  permission: SharePermission;
+}
+
+export interface UpdateShareRequest {
+  permission: SharePermission;
+}
+
 export interface ShareResponse {
   _id: string;
   resourceType: ShareResourceType;

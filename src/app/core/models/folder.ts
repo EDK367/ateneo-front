@@ -1,5 +1,18 @@
 import { FileResponse } from './file';
 
+export interface CreateFolderRequest {
+  name: string;
+  parentId?: string;
+}
+
+export interface MoveFolderRequest {
+  newParentId?: string | null;
+}
+
+export interface RenameFolderRequest {
+  name: string;
+}
+
 export interface FolderResponse {
   _id: string;
   name: string;
