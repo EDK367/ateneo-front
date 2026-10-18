@@ -19,6 +19,26 @@
   --bg-gradient-end: #0B1220;
 
   --shadow-soft: 0 4px 6px rgba(0, 0, 0, 0.3);
+
+  color-scheme: dark;
+  --mat-sys-surface: var(--color-bg-soft);
+  --mat-sys-on-surface: var(--color-text-main);
+  --mat-sys-on-surface-variant: var(--color-text-muted);
+  --mat-sys-outline: rgba(255, 255, 255, 0.16);
+  --mat-sys-outline-variant: rgba(255, 255, 255, 0.1);
+  --mat-sys-primary: var(--color-primary);
+
+  --mat-form-field-input-text-color: var(--color-text-main);
+  --mat-form-field-focus-input-text-color: var(--color-text-main);
+  --mat-form-field-hover-input-text-color: var(--color-text-main);
+  --mat-form-field-input-text-placeholder-color: var(--color-text-muted);
+  --mat-form-field-label-text-color: var(--color-text-muted);
+  --mat-form-field-focus-label-text-color: var(--color-primary);
+
+  --mat-tab-header-inactive-label-text-color: var(--color-text-muted);
+  --mat-tab-header-active-label-text-color: var(--color-primary);
+  --mat-tab-header-active-focus-label-text-color: var(--color-primary);
+  --mat-tab-header-active-hover-label-text-color: var(--color-primary);
 }
 
 body.light-theme {
@@ -38,6 +58,26 @@ body.light-theme {
   --bg-gradient-end: #F8FAFC;
 
   --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+  color-scheme: light;
+  --mat-sys-surface: var(--color-bg-soft);
+  --mat-sys-on-surface: var(--color-text-main);
+  --mat-sys-on-surface-variant: var(--color-text-muted);
+  --mat-sys-outline: rgba(0, 0, 0, 0.16);
+  --mat-sys-outline-variant: rgba(0, 0, 0, 0.1);
+  --mat-sys-primary: var(--color-primary);
+
+  --mat-form-field-input-text-color: var(--color-text-main);
+  --mat-form-field-focus-input-text-color: var(--color-text-main);
+  --mat-form-field-hover-input-text-color: var(--color-text-main);
+  --mat-form-field-input-text-placeholder-color: var(--color-text-muted);
+  --mat-form-field-label-text-color: var(--color-text-muted);
+  --mat-form-field-focus-label-text-color: var(--color-primary);
+
+  --mat-tab-header-inactive-label-text-color: var(--color-text-muted);
+  --mat-tab-header-active-label-text-color: var(--color-primary);
+  --mat-tab-header-active-focus-label-text-color: var(--color-primary);
+  --mat-tab-header-active-hover-label-text-color: var(--color-primary);
 }
 
 body {
@@ -85,4 +125,80 @@ body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
   );
   box-shadow: 0 0 12px color-mix(in srgb, var(--color-primary) 65%, transparent),
               0 0 8px color-mix(in srgb, var(--color-secondary) 50%, transparent);
+}
+
+.cdk-overlay-container,
+.cdk-overlay-pane {
+  color: var(--color-text-main);
+}
+
+.mat-mdc-dialog-container .mdc-dialog__surface {
+  background-color: var(--color-bg-soft) !important;
+  color: var(--color-text-main) !important;
+  border: 1px solid color-mix(in srgb, var(--color-text-main) 12%, transparent) !important;
+  border-radius: 1rem !important;
+  padding: 0 !important;
+  box-shadow: var(--shadow-soft) !important;
+  overflow: hidden !important;
+}
+
+.mat-mdc-form-field,
+.mat-mdc-text-field-wrapper,
+.mdc-text-field {
+  --mdc-outlined-text-field-input-text-color: var(--color-text-main) !important;
+  --mdc-outlined-text-field-label-text-color: var(--color-text-muted) !important;
+  --mdc-outlined-text-field-focus-label-text-color: var(--color-primary) !important;
+  --mdc-outlined-text-field-hover-label-text-color: var(--color-text-main) !important;
+  --mdc-outlined-text-field-outline-color: color-mix(in srgb, var(--color-text-main) 20%, transparent) !important;
+  --mdc-outlined-text-field-focus-outline-color: var(--color-primary) !important;
+  --mdc-outlined-text-field-hover-outline-color: color-mix(in srgb, var(--color-text-main) 40%, transparent) !important;
+  --mat-select-trigger-text-color: var(--color-text-main) !important;
+  --mat-select-placeholder-text-color: var(--color-text-muted) !important;
+}
+
+.mat-mdc-form-field input.mat-mdc-input-element,
+.mat-mdc-form-field textarea.mat-mdc-input-element,
+.mat-mdc-form-field .mdc-text-field__input,
+.mat-mdc-input-element {
+  color: var(--color-text-main) !important;
+  -webkit-text-fill-color: var(--color-text-main) !important;
+  caret-color: var(--color-primary) !important;
+}
+
+.mat-mdc-form-field input::placeholder,
+.mat-mdc-form-field textarea::placeholder {
+  color: var(--color-text-muted) !important;
+  -webkit-text-fill-color: var(--color-text-muted) !important;
+  opacity: 0.75 !important;
+}
+
+.mat-mdc-form-field .mat-mdc-floating-label,
+.mat-mdc-form-field .mdc-floating-label {
+  color: var(--color-text-muted) !important;
+}
+
+.mat-mdc-form-field.mat-focused .mat-mdc-floating-label,
+.mat-mdc-form-field.mat-focused .mdc-floating-label {
+  color: var(--color-primary) !important;
+}
+
+.mat-mdc-select-value {
+  color: var(--color-text-main) !important;
+}
+
+.mat-mdc-tab .mdc-tab__text-label {
+  color: var(--color-text-muted) !important;
+  transition: color 0.2s ease;
+}
+
+.mat-mdc-tab.mdc-tab--active .mdc-tab__text-label {
+  color: var(--color-primary) !important;
+  font-weight: 600 !important;
+}
+
+.mat-mdc-tab-header {
+  --mdc-tab-indicator-active-indicator-color: var(--color-primary) !important;
+  --mat-tab-header-active-label-text-color: var(--color-primary) !important;
+  --mat-tab-header-inactive-label-text-color: var(--color-text-muted) !important;
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text-main) 10%, transparent);
 }

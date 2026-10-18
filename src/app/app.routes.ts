@@ -105,13 +105,13 @@ export const routes: Routes = [
       },
       {
         path: 'dashboard',
-        redirectTo: 'profile',
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./features/user/pages/dashboard/dashboard').then(m => m.DashboardComponent)
       },
       {
         path: 'documents',
-        redirectTo: 'profile',
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./features/user/pages/documents/documents').then(m => m.DocumentsComponent)
       },
       {
         path: 'shared',
@@ -135,7 +135,7 @@ export const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'profile',
+        redirectTo: 'dashboard',
         pathMatch: 'full'
       }
     ]

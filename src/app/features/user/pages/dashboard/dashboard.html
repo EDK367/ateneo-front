@@ -1,0 +1,166 @@
+<div class="dashboard-container">
+  <div class="welcome-banner">
+    <div class="welcome-text">
+      <h1 class="welcome-title">Bienvenido a tu Espacio Documental</h1>
+      <p class="welcome-subtitle">Gestiona, consulta y colabora en tus archivos digitales en formato Markdown y Texto.</p>
+    </div>
+
+    <div class="dashboard-search-box">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input type="text" 
+             [(ngModel)]="searchQuery" 
+             placeholder="Buscar archivos sugeridos, carpetas, colaboradores..." 
+             class="search-input" />
+      @if (searchQuery()) {
+        <button type="button" class="clear-btn" (click)="searchQuery.set('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+
+    <div class="filter-pills-bar">
+      @for (pill of quickFilters; track pill.id) {
+        <button type="button" 
+                class="pill-btn" 
+                [class.active]="selectedFilter() === pill.id" 
+                (click)="setFilter(pill.id)">
+          {{ pill.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <section class="stats-grid">
+    @for (stat of stats(); track stat.label) {
+      <div class="stat-card">
+        <div class="stat-icon-wrapper" [style.background-color]="stat.color + '22'" [style.color]="stat.color">
+          <mat-icon>{{ stat.icon }}</mat-icon>
+        </div>
+        <div class="stat-details">
+          <span class="stat-value">{{ stat.value }}</span>
+          <span class="stat-label">{{ stat.label }}</span>
+          <span class="stat-subtext">{{ stat.subtext }}</span>
+        </div>
+      </div>
+    }
+  </section>
+
+  <section class="section-block">
+    <div class="section-header">
+      <div class="suggested-title-area">
+        <h2 class="section-title">Archivos Sugeridos</h2>
+        <span class="smart-badge">Sugerencias Inteligentes</span>
+      </div>
+      <a href="javascript:void(0)" class="section-link with-icon">
+        <span>Ver Historial</span>
+        <mat-icon>arrow_forward</mat-icon>
+      </a>
+    </div>
+
+    <div class="suggested-grid">
+      @for (item of filteredSuggested(); track item.id) {
+        <div class="suggested-card">
+          <div class="suggested-card-header">
+            <div class="suggested-file-icon" [style.background-color]="item.iconBg" [style.color]="item.iconColor">
+              <mat-icon>{{ item.type === 'md' ? 'article' : 'description' }}</mat-icon>
+            </div>
+            <span class="format-badge" [style.color]="item.badgeColor" [style.border-color]="item.badgeColor + '55'">
+              {{ item.type.toUpperCase() }}
+            </span>
+          </div>
+
+          <div class="suggested-card-body">
+            <h3 class="suggested-file-name" [title]="item.name">{{ item.name }}</h3>
+            <span class="suggested-file-time">{{ item.openedAgo }}</span>
+          </div>
+
+          <div class="suggested-card-footer">
+            <div class="suggested-owner">
+              <div class="owner-avatar">
+                {{ item.ownerAvatar }}
+              </div>
+              <span class="owner-name">{{ item.ownerName }}</span>
+            </div>
+
+            @if (item.collaborators) {
+              <div class="collaborator-avatars">
+                @for (c of item.collaborators; track c) {
+                  <span class="collab-badge">{{ c }}</span>
+                }
+              </div>
+            }
+
+            <span class="status-badge" [class.shared]="item.statusType === 'shared'" [class.private]="item.statusType === 'private'" [class.active]="item.statusType === 'active'">
+              {{ item.status }}
+            </span>
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-state-card">
+          <mat-icon class="empty-icon">folder_open</mat-icon>
+          <p class="empty-text">No hay archivos sugeridos o recientes disponibles</p>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="section-block">
+    <div class="section-header">
+      <h2 class="section-title">Actividad Reciente</h2>
+      <span class="activity-subtitle">Últimas operaciones realizadas en tus documentos</span>
+    </div>
+
+    <div class="activity-table-container">
+      <table class="activity-table">
+        <thead>
+          <tr>
+            <th>Documento</th>
+            <th>Acción</th>
+            <th>Usuario</th>
+            <th>Momento</th>
+            <th>Tamaño</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (act of recentActivities(); track act.id) {
+            <tr>
+              <td>
+                <div class="doc-cell">
+                  <div class="doc-icon" [class.type-md]="act.type === 'md'" [class.type-txt]="act.type === 'txt'">
+                    <mat-icon>{{ act.type === 'md' ? 'article' : 'description' }}</mat-icon>
+                  </div>
+                  <span class="doc-name">{{ act.name }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="action-tag">{{ act.action }}</span>
+              </td>
+              <td>
+                <span class="user-text">{{ act.user }}</span>
+              </td>
+              <td>
+                <span class="time-text">{{ act.time }}</span>
+              </td>
+              <td>
+                <span class="size-text">{{ act.size }}</span>
+              </td>
+              <td>
+                <button type="button" class="btn-action-icon" matTooltip="Abrir archivo">
+                  <mat-icon>open_in_new</mat-icon>
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty-table-cell">
+                <mat-icon class="empty-table-icon">history</mat-icon>
+                <span>No hay actividad reciente registrada</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>

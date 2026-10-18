@@ -1,0 +1,284 @@
+<div class="documents-container">
+  <div class="top-header-bar">
+    <div class="breadcrumb-area">
+      @for (crumb of breadcrumbTrail(); track $index; let last = $last; let i = $index) {
+        <button 
+          type="button" 
+          class="breadcrumb-item" 
+          [class.primary]="i === 0"
+          [class.active-crumb]="last"
+          [disabled]="last"
+          (click)="navigateToBreadcrumb(crumb, i)"
+          [matTooltip]="!last ? 'Ir a ' + crumb.name : ''">
+          @if (i === 0) {
+            <mat-icon class="breadcrumb-icon">folder_shared</mat-icon>
+            <span class="breadcrumb-title">{{ crumb.name }}</span>
+          } @else {
+            <mat-icon class="folder-mini-icon">folder</mat-icon>
+            <span class="breadcrumb-folder-name">{{ crumb.name }}</span>
+          }
+        </button>
+        @if (!last) {
+          <mat-icon class="breadcrumb-sep">chevron_right</mat-icon>
+        }
+      }
+      @if (currentFolderId()) {
+        <button type="button" class="btn-navigate-up" (click)="navigateUp()" matTooltip="Subir al nivel anterior">
+          <mat-icon>arrow_upward</mat-icon>
+          <span>Subir nivel</span>
+        </button>
+      }
+    </div>
+
+    <div class="header-actions">
+      <div class="filter-pills">
+        @for (pill of filters; track pill.id) {
+          <button type="button" 
+                  class="pill-btn" 
+                  [class.active]="selectedFilter() === pill.id" 
+                  (click)="setFilter(pill.id)">
+            {{ pill.label }}
+          </button>
+        }
+      </div>
+
+      <div class="view-toggle-group">
+        <button type="button" 
+                class="view-toggle-btn" 
+                [class.active]="viewMode() === 'grid'" 
+                (click)="toggleView('grid')"
+                matTooltip="Vista en cuadrícula">
+          <mat-icon>grid_view</mat-icon>
+        </button>
+        <button type="button" 
+                class="view-toggle-btn" 
+                [class.active]="viewMode() === 'list'" 
+                (click)="toggleView('list')"
+                matTooltip="Vista en lista">
+          <mat-icon>view_list</mat-icon>
+        </button>
+      </div>
+
+      <button type="button" class="btn-primary-action" (click)="openCreateFileDialog()">
+        <mat-icon>add</mat-icon>
+        <span>Nuevo</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="search-filter-toolbar">
+    <div class="search-input-wrapper">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input type="text" 
+             [(ngModel)]="searchQuery" 
+             placeholder="Buscar en Mi Unidad por nombre de archivo o propietario..." 
+             class="search-input" />
+      @if (searchQuery()) {
+        <button type="button" class="clear-btn" (click)="searchQuery.set('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+
+  <section class="section-block">
+    <div class="section-header">
+      <h2 class="section-title">Carpetas</h2>
+      <a href="javascript:void(0)" class="section-link">Mostrar todas ({{ folders().length }})</a>
+    </div>
+
+    <div class="folders-grid">
+      @for (folder of folders(); track folder.id) {
+        <div 
+          class="folder-card" 
+          (dblclick)="enterFolder(folder)" 
+          matTooltip="Doble clic para abrir carpeta">
+          <div class="folder-icon-wrapper" [style.background-color]="folder.color + '22'" [style.color]="folder.color">
+            <mat-icon>folder</mat-icon>
+          </div>
+          <div class="folder-info">
+            <span class="folder-name">{{ folder.name }}</span>
+            <span class="folder-meta">{{ folder.itemCount }} elementos • {{ folder.updatedAt }}</span>
+          </div>
+          <button type="button" class="card-more-btn" matTooltip="Más opciones" (click)="$event.stopPropagation()">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+        </div>
+      } @empty {
+        <div class="empty-folders-card">
+          <mat-icon class="empty-folders-icon">folder_open</mat-icon>
+          <span>No hay carpetas en este directorio</span>
+        </div>
+      }
+    </div>
+  </section>
+
+  <section class="section-block">
+    <div class="section-header">
+      <div class="title-with-count">
+        <h2 class="section-title">Archivos</h2>
+        <span class="count-badge">Mostrando {{ filteredFiles().length }} de {{ files().length }} elementos</span>
+      </div>
+
+      <div class="table-actions">
+        <button type="button" class="btn-table-action">
+          <mat-icon>filter_list</mat-icon>
+          <span>Filtrar</span>
+        </button>
+        <button type="button" class="btn-table-action">
+          <mat-icon>swap_vert</mat-icon>
+          <span>Ordenar: Última modificación</span>
+        </button>
+      </div>
+    </div>
+
+    @if (viewMode() === 'list') {
+      <div class="table-container">
+        <table class="files-table">
+          <thead>
+            <tr>
+              <th class="col-checkbox">
+                <input type="checkbox" 
+                       [checked]="selectAll()" 
+                       (change)="toggleSelectAll()" 
+                       class="custom-checkbox" />
+              </th>
+              <th class="col-name">Nombre</th>
+              <th class="col-owner">Propietario</th>
+              <th class="col-modified">Última modificación</th>
+              <th class="col-size">Tamaño</th>
+              <th class="col-sharing">Compartido</th>
+              <th class="col-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (file of filteredFiles(); track file.id) {
+              <tr [class.selected]="file.selected">
+                <td class="col-checkbox">
+                  <input type="checkbox" 
+                         [checked]="file.selected" 
+                         (change)="toggleSelectFile(file)" 
+                         class="custom-checkbox" />
+                </td>
+                <td class="col-name">
+                  <div class="file-name-cell">
+                    <div class="file-ext-icon" [class.type-md]="file.extension === 'md'" [class.type-txt]="file.extension === 'txt'">
+                      <mat-icon>{{ file.extension === 'md' ? 'article' : 'description' }}</mat-icon>
+                    </div>
+                    <span class="file-name-text">{{ file.name }}</span>
+                  </div>
+                </td>
+                <td class="col-owner">
+                  <div class="owner-cell">
+                    <div class="owner-avatar" [class.is-self]="file.isCurrentUser">
+                      {{ file.ownerAvatar }}
+                    </div>
+                    <span class="owner-name">
+                      {{ file.ownerName }}
+                      @if (file.isCurrentUser) {
+                        <span class="self-tag">(Tú)</span>
+                      }
+                    </span>
+                  </div>
+                </td>
+                <td class="col-modified">
+                  <span class="text-secondary">{{ file.lastModified }}</span>
+                </td>
+                <td class="col-size">
+                  <span class="text-secondary">{{ file.size }}</span>
+                </td>
+                <td class="col-sharing">
+                  @if (file.sharedStatus === 'shared') {
+                    <span class="share-badge shared">
+                      <mat-icon>people</mat-icon>
+                      <span>Compartido con {{ file.sharedCount }}</span>
+                    </span>
+                  } @else {
+                    <span class="share-badge private">
+                      <mat-icon>lock</mat-icon>
+                      <span>Solo tú</span>
+                    </span>
+                  }
+                </td>
+                <td class="col-actions">
+                  <div class="row-actions">
+                    <button type="button" class="action-icon-btn" matTooltip="Descargar archivo">
+                      <mat-icon>download</mat-icon>
+                    </button>
+                    <button type="button" class="action-icon-btn" matTooltip="Previsualizar">
+                      <mat-icon>visibility</mat-icon>
+                    </button>
+                    <button type="button" class="action-icon-btn" matTooltip="Más opciones">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="7" class="empty-table-cell">
+                  <mat-icon class="empty-table-icon">description</mat-icon>
+                  <span>No hay archivos en este directorio</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (files().length > 0) {
+          <div class="table-pagination">
+            <span class="pagination-info">Página 1 de 1</span>
+            <div class="pagination-buttons">
+              <button type="button" class="btn-pagination" disabled>Anterior</button>
+              <button type="button" class="btn-pagination active">1</button>
+              <button type="button" class="btn-pagination" disabled>Siguiente</button>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="files-grid">
+        @for (file of filteredFiles(); track file.id) {
+          <div class="file-grid-card" [class.selected]="file.selected">
+            <div class="grid-card-top">
+              <span class="file-type-badge" [class.type-md]="file.extension === 'md'" [class.type-txt]="file.extension === 'txt'">
+                {{ file.extension.toUpperCase() }}
+              </span>
+              <button type="button" class="action-icon-btn">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+            </div>
+            
+            <div class="grid-card-icon" [class.type-md]="file.extension === 'md'" [class.type-txt]="file.extension === 'txt'">
+              <mat-icon>{{ file.extension === 'md' ? 'article' : 'description' }}</mat-icon>
+            </div>
+
+            <div class="grid-card-body">
+              <span class="grid-card-name" [title]="file.name">{{ file.name }}</span>
+              <span class="grid-card-meta">{{ file.size }} • {{ file.lastModified }}</span>
+            </div>
+
+            <div class="grid-card-footer">
+              <div class="owner-cell">
+                <div class="owner-avatar" [class.is-self]="file.isCurrentUser">
+                  {{ file.ownerAvatar }}
+                </div>
+                <span class="owner-name small">{{ file.ownerName }}</span>
+              </div>
+              @if (file.sharedStatus === 'shared') {
+                <span class="share-badge shared small">
+                  <mat-icon>people</mat-icon>
+                </span>
+              }
+            </div>
+          </div>
+        } @empty {
+          <div class="empty-grid-card">
+            <mat-icon class="empty-grid-icon">description</mat-icon>
+            <span>No hay archivos en este directorio</span>
+          </div>
+        }
+      </div>
+    }
+  </section>
+</div>

@@ -1,0 +1,122 @@
+<div class="p-6 flex flex-col gap-5 w-full bg-[var(--color-bg-soft)] text-[var(--color-text-main)]">
+  <div class="flex items-center justify-between pb-3 border-b border-[color-mix(in_srgb,var(--color-text-main)_12%,transparent)]">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)] text-[var(--color-primary)]">
+        <mat-icon>{{ selectedTab === 0 ? 'create_new_folder' : 'upload_file' }}</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-base font-bold m-0 text-[var(--color-text-main)]">
+          {{ selectedTab === 0 ? 'Crear Nueva Carpeta' : 'Crear y Subir Archivo' }}
+        </h2>
+        <p class="text-xs m-0 mt-0.5 text-[var(--color-text-muted)]">
+          Ubicación: <strong class="text-[var(--color-primary)] font-semibold">{{ targetLocation }}</strong>
+        </p>
+      </div>
+    </div>
+    <button type="button" mat-icon-button (click)="cancel()" class="text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-tab-group [(selectedIndex)]="selectedTab" animationDuration="150ms" class="w-full">
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-sm">folder</mat-icon>
+          <span>Crear Carpeta</span>
+        </div>
+      </ng-template>
+
+      <div class="flex flex-col gap-3 pt-4">
+        <mat-form-field appearance="outline" class="w-full">
+          <input matInput [(ngModel)]="folderName" placeholder="Nombre de la carpeta" required (keyup.enter)="save()" />
+          <mat-icon matPrefix class="mr-2 text-[var(--color-primary)]">folder</mat-icon>
+        </mat-form-field>
+        <span class="text-xs text-[var(--color-text-muted)]">La carpeta se creará dentro del directorio actual: {{ targetLocation }}.</span>
+      </div>
+    </mat-tab>
+
+    <mat-tab>
+      <ng-template mat-tab-label>
+        <div class="flex items-center gap-2">
+          <mat-icon class="text-sm">note_add</mat-icon>
+          <span>Crear Archivo</span>
+        </div>
+      </ng-template>
+
+      <div class="flex flex-col gap-3 pt-4">
+        <div 
+          (click)="fileInput.click()" 
+          (dragover)="onDragOver($event)"
+          (dragleave)="onDragLeave($event)"
+          (drop)="onDrop($event)"
+          class="border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center border-[color-mix(in_srgb,var(--color-text-main)_20%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-light)_60%,transparent)] hover:border-[var(--color-primary)]"
+          [class.border-[var(--color-primary)]]="isDragging"
+          [class.bg-[color-mix(in_srgb,var(--color-primary)_10%,transparent)]]="isDragging">
+          <input #fileInput type="file" accept=".md,.txt" class="hidden" (change)="onFileSelected($event)" />
+          
+          <div class="w-12 h-12 rounded-xl flex items-center justify-center bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)] text-[var(--color-primary)]">
+            <mat-icon class="text-2xl w-6 h-6">cloud_upload</mat-icon>
+          </div>
+
+          <div>
+            <p class="font-semibold text-sm m-0 text-[var(--color-text-main)]">Haz clic o arrastra el archivo aquí</p>
+            <p class="text-xs m-0 mt-1 text-[var(--color-text-muted)]">Solo archivos de texto (.txt) y Markdown (.md)</p>
+          </div>
+        </div>
+
+        @if (selectedFile) {
+          <div class="flex items-center justify-between p-3 rounded-xl border border-[color-mix(in_srgb,var(--color-primary)_35%,transparent)] bg-[color-mix(in_srgb,var(--color-bg-light)_80%,transparent)]">
+            <div class="flex items-center gap-3 overflow-hidden">
+              <div class="w-9 h-9 rounded-lg flex items-center justify-center bg-[color-mix(in_srgb,var(--color-primary)_20%,transparent)] text-[var(--color-primary)] shrink-0">
+                <mat-icon class="text-xl w-5 h-5">description</mat-icon>
+              </div>
+              <div class="truncate">
+                <span class="text-sm font-semibold block truncate text-[var(--color-text-main)]">{{ selectedFile.name }}</span>
+                <span class="text-xs text-[var(--color-text-muted)]">{{ formatFileSize(selectedFile.size) }}</span>
+              </div>
+            </div>
+            <button type="button" mat-icon-button (click)="removeFile($event)" class="text-[var(--color-text-muted)] hover:text-red-400">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+
+        <mat-form-field appearance="outline" class="w-full mt-1">
+          <input matInput [(ngModel)]="tagsString" placeholder="Etiquetas (opcional, separadas por coma)" />
+          <mat-icon matPrefix class="mr-2 text-[var(--color-text-muted)]">label</mat-icon>
+        </mat-form-field>
+        <span class="text-xs text-[var(--color-text-muted)]">El archivo se subirá dentro del directorio actual: {{ targetLocation }}.</span>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+
+  <div class="flex items-center justify-end gap-3 pt-3 border-t border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)]">
+    <button type="button" mat-button (click)="cancel()" [disabled]="loading" class="text-[var(--color-text-muted)]">
+      Cancelar
+    </button>
+    <button 
+      type="button" 
+      mat-flat-button 
+      (click)="save()" 
+      [disabled]="isSaveDisabled()" 
+      class="px-5 py-2 font-bold rounded-lg !bg-[var(--color-primary)] !Etiquetext-[#0B1220]">
+      @if (loading) {
+        <span class="flex items-center gap-2">
+          <mat-spinner diameter="18" strokeWidth="2.5"></mat-spinner>
+          <span>Guardando...</span>
+        </span>
+      } @else if (selectedTab === 0) {
+        <span class="flex items-center gap-1.5">
+          <mat-icon class="text-lg w-5 h-5">create_new_folder</mat-icon>
+          <span>Crear Carpeta</span>
+        </span>
+      } @else {
+        <span class="flex items-center gap-1.5">
+          <mat-icon class="text-lg w-5 h-5">cloud_upload</mat-icon>
+          <span>Subir Archivo</span>
+        </span>
+      }
+    </button>
+  </div>
+</div>

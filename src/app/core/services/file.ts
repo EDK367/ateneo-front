@@ -43,4 +43,8 @@ export class FileService extends ApiService {
   deleteFile(id: string): Observable<FileResponse> {
     return this.delete<FileResponse>(`/files/${id}`);
   }
+
+  getRecent(limit = 10): Observable<FileResponse[]> {
+    return this.get<FileResponse[]>(`/files/recent?limit=${limit}`);
+  }
 }
