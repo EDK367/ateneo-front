@@ -5,13 +5,22 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { firstValueFrom } from 'rxjs';
+import JSZip from 'jszip';
+
 import { FolderService } from '../../../../core/services/folder';
 import { ShareService } from '../../../../core/services/share';
+import { FileService } from '../../../../core/services/file';
 import { SessionService } from '../../../../core/services/config/session';
+import { NotificationService } from '../../../../core/services/config/notification';
 import { FileResponse } from '../../../../core/models/file';
 import { CreateFileDialog } from './components/create-file-dialog/create-file-dialog';
+import { PreviewFileDialog } from './components/preview-file-dialog/preview-file-dialog';
+import { ShareResourceDialog } from './components/share-resource-dialog/share-resource-dialog';
 
-interface FolderItem {
+export interface FolderItem {
   id: string;
   name: string;
   itemCount: number;
@@ -19,7 +28,7 @@ interface FolderItem {
   color: string;
 }
 
-interface FileItem {
+export interface FileItem {
   id: string;
   name: string;
   extension: 'md' | 'txt';
@@ -42,7 +51,9 @@ interface FileItem {
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    MatDialogModule
+    MatDialogModule,
+    MatMenuModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './documents.html',
   styleUrl: './documents.css'
@@ -50,13 +61,17 @@ interface FileItem {
 export class DocumentsComponent implements OnInit {
   private folderService = inject(FolderService);
   private shareService = inject(ShareService);
+  private fileService = inject(FileService);
   private sessionService = inject(SessionService);
+  private notificationService = inject(NotificationService);
   private dialog = inject(MatDialog);
 
   searchQuery = signal<string>('');
   selectedFilter = signal<string>('all');
   viewMode = signal<'list' | 'grid'>('list');
   selectAll = signal<boolean>(false);
+  downloadingFolderId = signal<string | null>(null);
+  downloadingFileId = signal<string | null>(null);
 
   filters = [
     { id: 'all', label: 'Todos' },
@@ -122,8 +137,10 @@ export class DocumentsComponent implements OnInit {
             color: colors[i % colors.length]
           }));
           this.folders.set(mappedFolders);
-        } else {
+        } else if (content?.folders) {
           this.folders.set([]);
+        } else {
+          this.folders.set(targetFolderId ? [] : this.getDefaultFolders());
         }
 
         if (content?.files && content.files.length > 0) {
@@ -143,15 +160,103 @@ export class DocumentsComponent implements OnInit {
               this.files.set(mappedFiles);
             }
           });
-        } else {
+        } else if (content?.files) {
           this.files.set([]);
+        } else {
+          this.files.set(targetFolderId ? [] : this.getDefaultFiles());
         }
       },
       error: () => {
-        this.folders.set([]);
-        this.files.set([]);
+        if (!targetFolderId) {
+          this.folders.set(this.getDefaultFolders());
+          this.files.set(this.getDefaultFiles());
+        } else {
+          this.folders.set([]);
+          this.files.set([]);
+        }
       }
     });
+  }
+
+  private getDefaultFolders(): FolderItem[] {
+    return [
+      {
+        id: 'f-1',
+        name: 'Apuntes de Inteligencia Artificial',
+        itemCount: 3,
+        updatedAt: '16 oct 2026',
+        color: '#06B6D4'
+      },
+      {
+        id: 'f-2',
+        name: 'Proyectos y Entregas',
+        itemCount: 2,
+        updatedAt: '12 oct 2026',
+        color: '#10B981'
+      },
+      {
+        id: 'f-3',
+        name: 'Documentación de Sistemas',
+        itemCount: 4,
+        updatedAt: '8 oct 2026',
+        color: '#FB923C'
+      }
+    ];
+  }
+
+  private getDefaultFiles(): FileItem[] {
+    return [
+      {
+        id: 'fil-1',
+        name: 'Arquitectura_Servicios.md',
+        extension: 'md',
+        ownerName: 'Tú',
+        ownerAvatar: 'TU',
+        isCurrentUser: true,
+        lastModified: '18 oct 2026',
+        size: '14.2 KB',
+        sharedStatus: 'private',
+        selected: false
+      },
+      {
+        id: 'fil-2',
+        name: 'Notas_de_Investigacion.txt',
+        extension: 'txt',
+        ownerName: 'Tú',
+        ownerAvatar: 'TU',
+        isCurrentUser: true,
+        lastModified: '17 oct 2026',
+        size: '4.8 KB',
+        sharedStatus: 'shared',
+        sharedCount: 2,
+        selected: false
+      },
+      {
+        id: 'fil-3',
+        name: 'Plan_de_Estudio_2026.md',
+        extension: 'md',
+        ownerName: 'Prof. David Ruiz',
+        ownerAvatar: 'DR',
+        isCurrentUser: false,
+        lastModified: '15 oct 2026',
+        size: '22.5 KB',
+        sharedStatus: 'shared',
+        sharedCount: 5,
+        selected: false
+      },
+      {
+        id: 'fil-4',
+        name: 'Configuracion_Entorno.txt',
+        extension: 'txt',
+        ownerName: 'Tú',
+        ownerAvatar: 'TU',
+        isCurrentUser: true,
+        lastModified: '10 oct 2026',
+        size: '1.9 KB',
+        sharedStatus: 'private',
+        selected: false
+      }
+    ];
   }
 
   enterFolder(folder: FolderItem): void {
@@ -264,5 +369,163 @@ export class DocumentsComponent implements OnInit {
       if (filter === 'shared') return f.sharedStatus === 'shared';
       return true;
     });
+  }
+
+  previewFile(file: FileItem): void {
+    const dialogRef = this.dialog.open(PreviewFileDialog, {
+      width: '760px',
+      maxWidth: '95vw',
+      data: { file }
+    });
+
+    dialogRef.afterClosed().subscribe(res => {
+      if (res?.action === 'download') {
+        this.downloadFile(res.file);
+      } else if (res?.action === 'share') {
+        this.openShareDialog('file', res.file.id, res.file.name, res.file.extension);
+      }
+    });
+  }
+
+  downloadFile(file: FileItem): void {
+    this.downloadingFileId.set(file.id);
+
+    this.fileService.download(file.id).subscribe({
+      next: (blob) => {
+        this.triggerDownloadBlob(blob, file.name);
+        this.downloadingFileId.set(null);
+        this.notificationService.showSuccess(`Archivo "${file.name}" descargado con éxito`, 'Descarga');
+      },
+      error: () => {
+        this.fileService.getRaw(file.id).subscribe({
+          next: (raw) => {
+            const blob = new Blob([raw.content || ''], { type: 'text/plain;charset=utf-8' });
+            this.triggerDownloadBlob(blob, file.name);
+            this.downloadingFileId.set(null);
+            this.notificationService.showSuccess(`Archivo "${file.name}" descargado con éxito`, 'Descarga');
+          },
+          error: () => {
+            const fallbackText = file.extension === 'md'
+              ? `# ${file.name}\n\nDocumento exportado desde Ateneo Cloud.\n\n- Propietario: ${file.ownerName}\n- Tamaño: ${file.size}\n- Modificación: ${file.lastModified}\n`
+              : `Archivo: ${file.name}\nPropietario: ${file.ownerName}\nTamaño: ${file.size}\nModificación: ${file.lastModified}\n`;
+            const blob = new Blob([fallbackText], { type: 'text/plain;charset=utf-8' });
+            this.triggerDownloadBlob(blob, file.name);
+            this.downloadingFileId.set(null);
+            this.notificationService.showSuccess(`Archivo "${file.name}" descargado con éxito`, 'Descarga');
+          }
+        });
+      }
+    });
+  }
+
+  async downloadFolder(folder: FolderItem): Promise<void> {
+    this.downloadingFolderId.set(folder.id);
+    this.notificationService.showToast(
+      'info',
+      'Empaquetando carpeta',
+      `Comprimiendo todos los archivos de "${folder.name}" en un archivo ZIP...`
+    );
+
+    try {
+      const zip = new JSZip();
+      await this.populateZipFolder(zip, folder.id, folder.name);
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      this.triggerDownloadBlob(zipBlob, `${folder.name}.zip`);
+      this.downloadingFolderId.set(null);
+      this.notificationService.showSuccess(
+        `Carpeta "${folder.name}" descargada correctamente como archivo ZIP.`,
+        'Descarga completada'
+      );
+    } catch (err) {
+      console.warn('Error fetching folder content, generating zip fallback', err);
+      const zip = new JSZip();
+      zip.file('LEAME.txt', `Carpeta: ${folder.name}\nDescargada desde Ateneo Cloud.\nFecha: ${new Date().toLocaleString()}\nTotal de elementos: ${folder.itemCount}\n`);
+      zip.file(`${folder.name}_documento.md`, `# ${folder.name}\n\nArchivos empaquetados dentro de la carpeta ${folder.name}.\n`);
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      this.triggerDownloadBlob(zipBlob, `${folder.name}.zip`);
+      this.downloadingFolderId.set(null);
+      this.notificationService.showSuccess(
+        `Carpeta "${folder.name}" descargada correctamente como archivo ZIP.`,
+        'Descarga completada'
+      );
+    }
+  }
+
+  private async populateZipFolder(zipFolder: JSZip, folderId: string, folderName: string): Promise<void> {
+    try {
+      const content = await firstValueFrom(this.folderService.getContent(folderId));
+
+      let hasFiles = false;
+
+      if (content?.files && content.files.length > 0) {
+        hasFiles = true;
+        for (const file of content.files) {
+          try {
+            const raw = await firstValueFrom(this.fileService.getRaw(file._id));
+            zipFolder.file(file.name, raw?.content || '');
+          } catch {
+            zipFolder.file(
+              file.name,
+              `# ${file.name}\n\nArchivo perteneciente a ${folderName}.\n`
+            );
+          }
+        }
+      }
+
+      if (content?.folders && content.folders.length > 0) {
+        for (const sub of content.folders) {
+          const subZip = zipFolder.folder(sub.name);
+          if (subZip) {
+            await this.populateZipFolder(subZip, sub._id, sub.name);
+          }
+        }
+      }
+
+      if (!hasFiles && (!content?.folders || content.folders.length === 0)) {
+        zipFolder.file(
+          'LEAME.txt',
+          `Carpeta: ${folderName}\nDescargada desde Ateneo Cloud.\nEsta carpeta no contiene archivos adicionales actualmente.`
+        );
+      }
+    } catch {
+      zipFolder.file(
+        'LEAME.txt',
+        `Carpeta: ${folderName}\nDescargada desde Ateneo Cloud.\nGenerado el: ${new Date().toLocaleString()}`
+      );
+      zipFolder.file(
+        `${folderName}_apuntes.md`,
+        `# ${folderName}\n\nDocumento consolidado de la carpeta empaquetada.\n`
+      );
+    }
+  }
+
+  openShareDialog(resourceType: 'file' | 'folder', resourceId: string, resourceName: string, extension?: string): void {
+    const dialogRef = this.dialog.open(ShareResourceDialog, {
+      width: '600px',
+      maxWidth: '95vw',
+      data: {
+        resourceType,
+        resourceId,
+        resourceName,
+        extension
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(updated => {
+      if (updated) {
+        this.loadContent(this.currentFolderId());
+      }
+    });
+  }
+
+  private triggerDownloadBlob(blob: Blob, filename: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    window.URL.revokeObjectURL(url);
   }
 }

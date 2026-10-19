@@ -1,0 +1,178 @@
+<div class="p-6 flex flex-col gap-4 w-full max-h-[90vh] bg-[var(--color-bg-soft)] text-[var(--color-text-main)] overflow-hidden">
+  <div class="flex items-center justify-between pb-3 border-b border-[color-mix(in_srgb,var(--color-text-main)_12%,transparent)]">
+    <div class="flex items-center gap-3 overflow-hidden">
+      <div 
+        class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+        [class.bg-cyan-500\/15]="data.resourceType === 'file'"
+        [class.text-cyan-400]="data.resourceType === 'file'"
+        [class.bg-amber-500\/15]="data.resourceType === 'folder'"
+        [class.text-amber-400]="data.resourceType === 'folder'">
+        <mat-icon>{{ data.resourceType === 'folder' ? 'folder_shared' : 'share' }}</mat-icon>
+      </div>
+      <div class="truncate">
+        <h2 class="text-base font-bold m-0 text-[var(--color-text-main)] truncate max-w-md">
+          Compartir {{ data.resourceType === 'folder' ? 'Carpeta' : 'Archivo' }}
+        </h2>
+        <p class="text-xs m-0 mt-0.5 text-[var(--color-text-muted)] truncate">
+          {{ data.resourceName }}
+        </p>
+      </div>
+    </div>
+    <button type="button" mat-icon-button (click)="close()" class="text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="overflow-y-auto max-h-[60vh] flex flex-col gap-5 pr-1">
+    <div class="p-3.5 rounded-xl bg-[color-mix(in_srgb,var(--color-bg-light)_70%,transparent)] border border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)] flex flex-col gap-2">
+      <div class="flex items-center justify-between text-xs font-semibold text-[var(--color-text-muted)]">
+        <span class="flex items-center gap-1.5">
+          <mat-icon class="text-xs w-4 h-4 text-cyan-400">link</mat-icon>
+          Enlace directo de acceso
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex-1 bg-[#0b1220] px-3 py-2 rounded-lg border border-white/10 text-xs font-mono text-cyan-300 truncate select-all">
+          {{ shareLink() }}
+        </div>
+        <button 
+          type="button" 
+          mat-stroked-button 
+          (click)="copyLink()" 
+          matTooltip="Copiar enlace al portapapeles"
+          class="shrink-0">
+          <mat-icon>content_copy</mat-icon>
+          <span>Copiar</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-3">
+      <span class="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+        Agregar personas
+      </span>
+
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+        <mat-form-field appearance="outline" class="w-full md:col-span-7" subscriptSizing="dynamic">
+          <mat-label>Seleccionar usuario</mat-label>
+          <mat-select [(value)]="selectedUserId">
+            @for (user of users(); track user._id) {
+              <mat-option [value]="user._id">
+                <div class="flex items-center justify-between w-full">
+                  <span class="font-medium">{{ user.username }}</span>
+                  <span class="text-xs text-[var(--color-text-muted)] ml-2">({{ user.email }})</span>
+                </div>
+              </mat-option>
+            }
+          </mat-select>
+          <mat-icon matPrefix class="mr-2 text-cyan-400">person_add</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full md:col-span-5" subscriptSizing="dynamic">
+          <mat-label>Permiso</mat-label>
+          <mat-select [(value)]="selectedPermission">
+            <mat-option value="read">
+              <div class="flex items-center gap-2">
+                <mat-icon class="text-sm w-4 h-4 text-emerald-400">visibility</mat-icon>
+                <span>Solo lectura</span>
+              </div>
+            </mat-option>
+            <mat-option value="edit">
+              <div class="flex items-center gap-2">
+                <mat-icon class="text-sm w-4 h-4 text-amber-400">edit</mat-icon>
+                <span>Edición</span>
+              </div>
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="flex justify-end">
+        <button 
+          type="button" 
+          mat-flat-button 
+          color="primary"
+          [disabled]="!selectedUserId() || submitting()"
+          (click)="addShare()">
+          @if (submitting()) {
+            <mat-spinner diameter="18" class="mr-2"></mat-spinner>
+          } @else {
+            <mat-icon>share</mat-icon>
+          }
+          <span>Compartir</span>
+        </button>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="flex flex-col gap-3">
+      <span class="text-xs font-bold uppercase tracking-wider text-[var(--color-text-muted)]">
+        Personas con acceso ({{ existingShares().length + 1 }})
+      </span>
+
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between p-2.5 rounded-xl bg-[color-mix(in_srgb,var(--color-bg-light)_50%,transparent)] border border-[color-mix(in_srgb,var(--color-text-main)_8%,transparent)]">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-xs">
+              TÚ
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-[var(--color-text-main)]">Tú</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-medium">Propietario</span>
+              </div>
+              <span class="text-xs text-[var(--color-text-muted)]">Control total del recurso</span>
+            </div>
+          </div>
+          <span class="text-xs text-[var(--color-text-muted)] italic">Propietario</span>
+        </div>
+
+        @for (share of existingShares(); track share.id) {
+          <div class="flex items-center justify-between p-2.5 rounded-xl bg-[color-mix(in_srgb,var(--color-bg-light)_50%,transparent)] border border-[color-mix(in_srgb,var(--color-text-main)_8%,transparent)]">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-full bg-purple-500/20 text-purple-300 flex items-center justify-center font-bold text-xs uppercase">
+                {{ share.userName.substring(0, 2) }}
+              </div>
+              <div>
+                <span class="text-sm font-semibold block text-[var(--color-text-main)]">{{ share.userName }}</span>
+                <span class="text-xs text-[var(--color-text-muted)]">{{ share.userEmail }}</span>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span 
+                class="text-xs px-2 py-0.5 rounded-md font-medium flex items-center gap-1"
+                [class.bg-emerald-500\/15]="share.permission === 'read'"
+                [class.text-emerald-300]="share.permission === 'read'"
+                [class.bg-amber-500\/15]="share.permission === 'edit'"
+                [class.text-amber-300]="share.permission === 'edit'">
+                <mat-icon class="text-xs w-3.5 h-3.5">{{ share.permission === 'read' ? 'visibility' : 'edit' }}</mat-icon>
+                <span>{{ share.permission === 'read' ? 'Solo lectura' : 'Edición' }}</span>
+              </span>
+
+              <button 
+                type="button" 
+                mat-icon-button 
+                matTooltip="Revocar acceso" 
+                (click)="revokeShare(share)"
+                class="text-[var(--color-text-muted)] hover:text-red-400">
+                <mat-icon class="text-base">person_remove</mat-icon>
+              </button>
+            </div>
+          </div>
+        } @empty {
+          <div class="py-3 text-center text-xs text-[var(--color-text-muted)]">
+            Este recurso aún no ha sido compartido con otros usuarios.
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-end gap-2 pt-3 border-t border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)]">
+    <button type="button" mat-flat-button color="primary" (click)="close()">
+      Listo
+    </button>
+  </div>
+</div>

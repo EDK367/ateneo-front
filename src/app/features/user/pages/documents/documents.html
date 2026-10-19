@@ -84,7 +84,9 @@
   <section class="section-block">
     <div class="section-header">
       <h2 class="section-title">Carpetas</h2>
-      <a href="javascript:void(0)" class="section-link">Mostrar todas ({{ folders().length }})</a>
+      <span class="text-xs text-[var(--color-text-muted)] font-medium">
+        {{ folders().length }} {{ folders().length === 1 ? 'carpeta' : 'carpetas' }}
+      </span>
     </div>
 
     <div class="folders-grid">
@@ -100,9 +102,30 @@
             <span class="folder-name">{{ folder.name }}</span>
             <span class="folder-meta">{{ folder.itemCount }} elementos • {{ folder.updatedAt }}</span>
           </div>
-          <button type="button" class="card-more-btn" matTooltip="Más opciones" (click)="$event.stopPropagation()">
-            <mat-icon>more_vert</mat-icon>
+
+          <button 
+            type="button" 
+            class="card-more-btn" 
+            matTooltip="Opciones de carpeta" 
+            [matMenuTriggerFor]="folderMenu"
+            (click)="$event.stopPropagation()">
+            @if (downloadingFolderId() === folder.id) {
+              <mat-spinner diameter="18" class="inline-block"></mat-spinner>
+            } @else {
+              <mat-icon>more_vert</mat-icon>
+            }
           </button>
+
+          <mat-menu #folderMenu="matMenu">
+            <button mat-menu-item (click)="downloadFolder(folder)">
+              <mat-icon class="text-cyan-400">folder_zip</mat-icon>
+              <span>Descargar (.zip)</span>
+            </button>
+            <button mat-menu-item (click)="openShareDialog('folder', folder.id, folder.name)">
+              <mat-icon class="text-amber-400">share</mat-icon>
+              <span>Compartir</span>
+            </button>
+          </mat-menu>
         </div>
       } @empty {
         <div class="empty-folders-card">
@@ -160,7 +183,7 @@
                          (change)="toggleSelectFile(file)" 
                          class="custom-checkbox" />
                 </td>
-                <td class="col-name">
+                <td class="col-name cursor-pointer" (click)="previewFile(file)" matTooltip="Clic para previsualizar">
                   <div class="file-name-cell">
                     <div class="file-ext-icon" [class.type-md]="file.extension === 'md'" [class.type-txt]="file.extension === 'txt'">
                       <mat-icon>{{ file.extension === 'md' ? 'article' : 'description' }}</mat-icon>
@@ -202,15 +225,49 @@
                 </td>
                 <td class="col-actions">
                   <div class="row-actions">
-                    <button type="button" class="action-icon-btn" matTooltip="Descargar archivo">
-                      <mat-icon>download</mat-icon>
+                    <button 
+                      type="button" 
+                      class="action-icon-btn" 
+                      matTooltip="Descargar archivo"
+                      (click)="downloadFile(file); $event.stopPropagation()">
+                      @if (downloadingFileId() === file.id) {
+                        <mat-spinner diameter="16" class="inline-block"></mat-spinner>
+                      } @else {
+                        <mat-icon>download</mat-icon>
+                      }
                     </button>
-                    <button type="button" class="action-icon-btn" matTooltip="Previsualizar">
+
+                    <button 
+                      type="button" 
+                      class="action-icon-btn" 
+                      matTooltip="Previsualizar"
+                      (click)="previewFile(file); $event.stopPropagation()">
                       <mat-icon>visibility</mat-icon>
                     </button>
-                    <button type="button" class="action-icon-btn" matTooltip="Más opciones">
+
+                    <button 
+                      type="button" 
+                      class="action-icon-btn" 
+                      matTooltip="Más opciones"
+                      [matMenuTriggerFor]="fileMenu" 
+                      (click)="$event.stopPropagation()">
                       <mat-icon>more_vert</mat-icon>
                     </button>
+
+                    <mat-menu #fileMenu="matMenu">
+                      <button mat-menu-item (click)="previewFile(file)">
+                        <mat-icon class="text-cyan-400">visibility</mat-icon>
+                        <span>Previsualizar</span>
+                      </button>
+                      <button mat-menu-item (click)="downloadFile(file)">
+                        <mat-icon class="text-emerald-400">download</mat-icon>
+                        <span>Descargar</span>
+                      </button>
+                      <button mat-menu-item (click)="openShareDialog('file', file.id, file.name, file.extension)">
+                        <mat-icon class="text-amber-400">share</mat-icon>
+                        <span>Compartir</span>
+                      </button>
+                    </mat-menu>
                   </div>
                 </td>
               </tr>
@@ -244,16 +301,46 @@
               <span class="file-type-badge" [class.type-md]="file.extension === 'md'" [class.type-txt]="file.extension === 'txt'">
                 {{ file.extension.toUpperCase() }}
               </span>
-              <button type="button" class="action-icon-btn">
-                <mat-icon>more_vert</mat-icon>
+
+              <button 
+                type="button" 
+                class="action-icon-btn" 
+                [matMenuTriggerFor]="gridFileMenu" 
+                (click)="$event.stopPropagation()"
+                matTooltip="Opciones">
+                @if (downloadingFileId() === file.id) {
+                  <mat-spinner diameter="16" class="inline-block"></mat-spinner>
+                } @else {
+                  <mat-icon>more_vert</mat-icon>
+                }
               </button>
+
+              <mat-menu #gridFileMenu="matMenu">
+                <button mat-menu-item (click)="previewFile(file)">
+                  <mat-icon class="text-cyan-400">visibility</mat-icon>
+                  <span>Previsualizar</span>
+                </button>
+                <button mat-menu-item (click)="downloadFile(file)">
+                  <mat-icon class="text-emerald-400">download</mat-icon>
+                  <span>Descargar</span>
+                </button>
+                <button mat-menu-item (click)="openShareDialog('file', file.id, file.name, file.extension)">
+                  <mat-icon class="text-amber-400">share</mat-icon>
+                  <span>Compartir</span>
+                </button>
+              </mat-menu>
             </div>
             
-            <div class="grid-card-icon" [class.type-md]="file.extension === 'md'" [class.type-txt]="file.extension === 'txt'">
+            <div 
+              class="grid-card-icon cursor-pointer" 
+              [class.type-md]="file.extension === 'md'" 
+              [class.type-txt]="file.extension === 'txt'"
+              (click)="previewFile(file)"
+              matTooltip="Clic para previsualizar">
               <mat-icon>{{ file.extension === 'md' ? 'article' : 'description' }}</mat-icon>
             </div>
 
-            <div class="grid-card-body">
+            <div class="grid-card-body cursor-pointer" (click)="previewFile(file)">
               <span class="grid-card-name" [title]="file.name">{{ file.name }}</span>
               <span class="grid-card-meta">{{ file.size }} • {{ file.lastModified }}</span>
             </div>
@@ -265,11 +352,21 @@
                 </div>
                 <span class="owner-name small">{{ file.ownerName }}</span>
               </div>
-              @if (file.sharedStatus === 'shared') {
-                <span class="share-badge shared small">
-                  <mat-icon>people</mat-icon>
-                </span>
-              }
+              <div class="flex items-center gap-1.5">
+                @if (file.sharedStatus === 'shared') {
+                  <span class="share-badge shared small" matTooltip="Compartido">
+                    <mat-icon>people</mat-icon>
+                  </span>
+                }
+                <button 
+                  type="button" 
+                  class="action-icon-btn" 
+                  style="width: 28px; height: 28px;"
+                  (click)="downloadFile(file); $event.stopPropagation()" 
+                  matTooltip="Descargar archivo">
+                  <mat-icon style="font-size: 16px; width: 16px; height: 16px;">download</mat-icon>
+                </button>
+              </div>
             </div>
           </div>
         } @empty {

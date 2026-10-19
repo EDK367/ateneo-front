@@ -1,0 +1,108 @@
+<div class="p-6 flex flex-col gap-4 w-full max-h-[88vh] bg-[var(--color-bg-soft)] text-[var(--color-text-main)] overflow-hidden">
+  <div class="flex items-center justify-between pb-3 border-b border-[color-mix(in_srgb,var(--color-text-main)_12%,transparent)]">
+    <div class="flex items-center gap-3 overflow-hidden">
+      <div 
+        class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+        [class.bg-cyan-500\/15]="data.file.extension === 'md'"
+        [class.text-cyan-400]="data.file.extension === 'md'"
+        [class.bg-emerald-500\/15]="data.file.extension === 'txt'"
+        [class.text-emerald-400]="data.file.extension === 'txt'">
+        <mat-icon>{{ data.file.extension === 'md' ? 'article' : 'description' }}</mat-icon>
+      </div>
+      <div class="truncate">
+        <div class="flex items-center gap-2">
+          <h2 class="text-base font-bold m-0 text-[var(--color-text-main)] truncate max-w-md">
+            {{ data.file.name }}
+          </h2>
+          <span 
+            class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md"
+            [class.bg-cyan-500\/20]="data.file.extension === 'md'"
+            [class.text-cyan-400]="data.file.extension === 'md'"
+            [class.bg-emerald-500\/20]="data.file.extension === 'txt'"
+            [class.text-emerald-400]="data.file.extension === 'txt'">
+            .{{ data.file.extension }}
+          </span>
+        </div>
+        <p class="text-xs m-0 mt-0.5 text-[var(--color-text-muted)] flex items-center gap-2">
+          <span>{{ data.file.size }}</span>
+          <span>•</span>
+          <span>Modificado: {{ data.file.lastModified }}</span>
+          <span>•</span>
+          <span>Propietario: {{ data.file.ownerName }}</span>
+        </p>
+      </div>
+    </div>
+    <button type="button" mat-icon-button (click)="close()" class="text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  @if (loading) {
+    <div class="flex flex-col items-center justify-center py-16 gap-3">
+      <mat-spinner diameter="40"></mat-spinner>
+      <span class="text-xs text-[var(--color-text-muted)]">Cargando previsualización del archivo...</span>
+    </div>
+  } @else {
+    @if (data.file.extension === 'md') {
+      <mat-tab-group [(selectedIndex)]="activeTab" animationDuration="150ms" class="w-full flex-1 overflow-hidden">
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-sm">visibility</mat-icon>
+              <span>Vista previa formateada</span>
+            </div>
+          </ng-template>
+          
+          <div class="overflow-y-auto max-h-[50vh] p-4 my-2 rounded-xl bg-[color-mix(in_srgb,var(--color-bg-light)_70%,transparent)] border border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)] text-sm leading-relaxed text-[var(--color-text-main)]" [innerHTML]="renderedMarkdown">
+          </div>
+        </mat-tab>
+
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <div class="flex items-center gap-2">
+              <mat-icon class="text-sm">code</mat-icon>
+              <span>Código fuente Markdown</span>
+            </div>
+          </ng-template>
+
+          <div class="overflow-y-auto max-h-[50vh] p-4 my-2 rounded-xl bg-[#0b1220] border border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)]">
+            <pre class="m-0 font-mono text-xs text-cyan-300 leading-relaxed whitespace-pre-wrap select-text">{{ rawContent }}</pre>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    } @else {
+      <div class="flex flex-col gap-2 flex-1 overflow-hidden">
+        <div class="flex items-center justify-between text-xs text-[var(--color-text-muted)] px-1">
+          <span>Contenido del archivo de texto</span>
+          <span>{{ lineCount }} líneas</span>
+        </div>
+        <div class="overflow-y-auto max-h-[52vh] p-4 rounded-xl bg-[#0b1220] border border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)]">
+          <pre class="m-0 font-mono text-xs text-gray-200 leading-relaxed whitespace-pre-wrap select-text">{{ rawContent }}</pre>
+        </div>
+      </div>
+    }
+  }
+
+  <div class="flex items-center justify-between pt-3 border-t border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)]">
+    <div class="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
+      <mat-icon class="text-xs w-4 h-4 text-cyan-400">info</mat-icon>
+      <span>Previsualización segura de documento</span>
+    </div>
+    
+    <div class="flex items-center gap-2">
+      <button type="button" mat-button (click)="close()" class="text-[var(--color-text-muted)]">
+        Cerrar
+      </button>
+
+      <button type="button" mat-stroked-button (click)="share()">
+        <mat-icon>share</mat-icon>
+        <span>Compartir</span>
+      </button>
+
+      <button type="button" mat-flat-button color="primary" (click)="download()">
+        <mat-icon>download</mat-icon>
+        <span>Descargar</span>
+      </button>
+    </div>
+  </div>
+</div>
