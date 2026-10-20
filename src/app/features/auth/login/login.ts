@@ -75,12 +75,12 @@ export class Login implements OnInit {
           next: (profile) => {
             this.sessionService.saveUser(profile);
             this.notificationService.showSuccess(`¡Bienvenido, ${profile.username}!`, 'Bienvenido');
-            const target = profile.role === 'admin' ? '/admin/profile' : '/user/profile';
+            const target = profile.role === 'admin' ? '/admin/dashboard' : '/user/dashboard';
             this.router.navigate([target]);
           },
           error: () => {
             this.notificationService.showSuccess(`¡Bienvenido, ${this.loginForm.user}!`, 'Bienvenido');
-            this.router.navigate(['/admin/profile']);
+            this.router.navigate(['/admin/dashboard']);
           }
         });
       },

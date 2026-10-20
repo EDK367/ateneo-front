@@ -2,7 +2,6 @@
   <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 class="text-2xl font-extrabold tracking-tight text-[var(--color-text-main)]">Panel de Administración</h1>
-      <p class="text-sm text-[var(--color-text-muted)] mt-1">Supervisión integral de usuarios, almacenamiento y actividad en Ateneo.</p>
     </div>
     <div class="flex items-center gap-3">
       <a mat-flat-button color="primary" routerLink="/admin/users" [queryParams]="{ action: 'new' }" class="!rounded-xl font-bold">
@@ -19,9 +18,6 @@
           <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span> Sistema Operativo
         </span>
         <h2 class="text-2xl font-black text-[var(--color-text-main)]">¡Bienvenido de nuevo, {{ userName() }}!</h2>
-        <p class="text-sm text-[var(--color-text-muted)] mt-1 max-w-xl">
-          Supervisa el rendimiento del servidor, gestiona permisos de acceso y consulta el volumen global de archivos documentales.
-        </p>
       </div>
       <div class="flex items-center gap-2">
         <a mat-stroked-button color="primary" routerLink="/admin/reports" class="!rounded-xl">
@@ -34,7 +30,7 @@
 
   <section class="flex flex-col gap-3">
     <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Accesos Directos</h3>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <a routerLink="/admin/users" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-cyan-500/50 hover:bg-white/[0.02] transition-all duration-200">
         <div class="flex items-center gap-3">
           <div class="w-11 h-11 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -42,23 +38,9 @@
           </div>
           <div>
             <h4 class="text-sm font-bold text-[var(--color-text-main)]">Gestión de Usuarios</h4>
-            <span class="text-xs text-[var(--color-text-muted)]">Crear y administrar cuentas</span>
           </div>
         </div>
         <mat-icon class="text-[var(--color-text-muted)] group-hover:text-cyan-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
-      </a>
-
-      <a routerLink="/admin/reports" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-purple-500/50 hover:bg-white/[0.02] transition-all duration-200">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform">
-            <mat-icon>insights</mat-icon>
-          </div>
-          <div>
-            <h4 class="text-sm font-bold text-[var(--color-text-main)]">Módulo de Reportes</h4>
-            <span class="text-xs text-[var(--color-text-muted)]">Estadísticas y cuotas</span>
-          </div>
-        </div>
-        <mat-icon class="text-[var(--color-text-muted)] group-hover:text-purple-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
       </a>
 
       <a routerLink="/admin/documents" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-emerald-500/50 hover:bg-white/[0.02] transition-all duration-200">
@@ -68,10 +50,45 @@
           </div>
           <div>
             <h4 class="text-sm font-bold text-[var(--color-text-main)]">Documentos Globales</h4>
-            <span class="text-xs text-[var(--color-text-muted)]">Explorador de archivos</span>
           </div>
         </div>
         <mat-icon class="text-[var(--color-text-muted)] group-hover:text-emerald-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
+      </a>
+
+      <a routerLink="/admin/shared" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-cyan-500/50 hover:bg-white/[0.02] transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <mat-icon>people</mat-icon>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-[var(--color-text-main)]">Recursos Compartidos</h4>
+          </div>
+        </div>
+        <mat-icon class="text-[var(--color-text-muted)] group-hover:text-cyan-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
+      </a>
+
+      <a routerLink="/admin/trash" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-rose-500/50 hover:bg-white/[0.02] transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <mat-icon>delete</mat-icon>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-[var(--color-text-main)]">Papelera Global</h4>
+          </div>
+        </div>
+        <mat-icon class="text-[var(--color-text-muted)] group-hover:text-rose-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
+      </a>
+
+      <a routerLink="/admin/reports" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-purple-500/50 hover:bg-white/[0.02] transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <mat-icon>insights</mat-icon>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-[var(--color-text-main)]">Módulo de Reportes</h4>
+          </div>
+        </div>
+        <mat-icon class="text-[var(--color-text-muted)] group-hover:text-purple-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
       </a>
 
       <a routerLink="/admin/audit-logs" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-orange-500/50 hover:bg-white/[0.02] transition-all duration-200">
@@ -81,7 +98,6 @@
           </div>
           <div>
             <h4 class="text-sm font-bold text-[var(--color-text-main)]">Auditoría y Logs</h4>
-            <span class="text-xs text-[var(--color-text-muted)]">Historial de operaciones</span>
           </div>
         </div>
         <mat-icon class="text-[var(--color-text-muted)] group-hover:text-orange-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
@@ -158,7 +174,6 @@
           <h3 class="text-base font-bold text-[var(--color-text-main)]">Distribución de Almacenamiento</h3>
           <span class="text-xs font-mono font-bold text-cyan-400">{{ stats()?.storagePercentage || 0 }}%</span>
         </div>
-        <p class="text-xs text-[var(--color-text-muted)] mt-1">Uso acumulado en MongoDB / GridFS</p>
 
         <div class="w-full h-3 rounded-full bg-white/5 overflow-hidden mt-4">
           <div 
@@ -204,7 +219,6 @@
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="text-base font-bold text-[var(--color-text-main)]">Actividad Reciente del Sistema</h3>
-            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Últimas acciones registradas en la plataforma</p>
           </div>
           <a mat-button color="primary" routerLink="/admin/audit-logs" class="!text-xs">
             <span>Ver todo</span>

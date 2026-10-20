@@ -1,0 +1,188 @@
+<div class="flex flex-col gap-5 max-w-[1400px] mx-auto w-full">
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold tracking-tight text-[var(--color-text-main)]">Papelera Global</h1>
+    </div>
+    <div class="flex items-center gap-3">
+      <button 
+        mat-flat-button 
+        color="warn" 
+        (click)="emptyTrash()" 
+        [disabled]="loading() || allItems().length === 0 || emptying()"
+        class="!rounded-xl font-bold"
+      >
+        @if (emptying()) {
+          <mat-spinner diameter="18" class="mr-2"></mat-spinner>
+          <span>Vaciando...</span>
+        } @else {
+          <ng-container>
+            <mat-icon>delete_forever</mat-icon>
+            <span>Vaciar Papelera</span>
+          </ng-container>
+        }
+      </button>
+    </div>
+  </header>
+
+  <mat-card appearance="outlined" class="!bg-[var(--color-bg-soft)] !border-white/10 !rounded-2xl">
+    <mat-card-content class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 !p-4">
+      <div class="flex flex-wrap items-center gap-2">
+        <button 
+          type="button" 
+          (click)="setFilter('all')"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border"
+          [class.bg-cyan-500]="activeFilter() === 'all'"
+          [class.text-slate-950]="activeFilter() === 'all'"
+          [class.border-cyan-500]="activeFilter() === 'all'"
+          [class.bg-white-5]="activeFilter() !== 'all'"
+          [class.text-slate-400]="activeFilter() !== 'all'"
+          [class.border-white-10]="activeFilter() !== 'all'"
+        >
+          Todos
+        </button>
+        <button 
+          type="button" 
+          (click)="setFilter('folders')"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border"
+          [class.bg-cyan-500]="activeFilter() === 'folders'"
+          [class.text-slate-950]="activeFilter() === 'folders'"
+          [class.border-cyan-500]="activeFilter() === 'folders'"
+          [class.bg-white-5]="activeFilter() !== 'folders'"
+          [class.text-slate-400]="activeFilter() !== 'folders'"
+          [class.border-white-10]="activeFilter() !== 'folders'"
+        >
+          Carpetas
+        </button>
+        <button 
+          type="button" 
+          (click)="setFilter('files')"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all border"
+          [class.bg-cyan-500]="activeFilter() === 'files'"
+          [class.text-slate-950]="activeFilter() === 'files'"
+          [class.border-cyan-500]="activeFilter() === 'files'"
+          [class.bg-white-5]="activeFilter() !== 'files'"
+          [class.text-slate-400]="activeFilter() !== 'files'"
+          [class.border-white-10]="activeFilter() !== 'files'"
+        >
+          Documentos y Archivos
+        </button>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <mat-form-field appearance="outline" floatLabel="always" class="w-64 max-w-full mb-[-1.25em]">
+          <mat-label>Buscar en papelera</mat-label>
+          <mat-icon matPrefix class="mr-2">search</mat-icon>
+          <input 
+            matInput 
+            type="text" 
+            [ngModel]="searchTerm()" 
+            (ngModelChange)="searchTerm.set($event); onSearchChange()" 
+            placeholder="Nombre de archivo..." 
+          />
+          @if (searchTerm()) {
+            <button mat-icon-button matSuffix (click)="clearSearch()">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </mat-form-field>
+        <mat-chip class="!bg-white/5 !text-[var(--color-text-muted)] !border !border-white/10 font-medium">
+          {{ filteredItems().length }} elementos
+        </mat-chip>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card appearance="outlined" class="!bg-[var(--color-bg-soft)] !border-white/10 !rounded-2xl overflow-hidden">
+    <mat-card-content class="!p-0">
+      @if (loading()) {
+        <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--color-text-muted)] gap-3">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p class="text-sm">Cargando elementos de la papelera...</p>
+        </div>
+      } @else if (filteredItems().length === 0) {
+        <div class="flex flex-col items-center justify-center p-14 text-center text-[var(--color-text-muted)] gap-2">
+          <mat-icon class="!w-12 !h-12 !text-5xl text-slate-500 mb-2">delete_outline</mat-icon>
+          <h3 class="text-base font-bold text-[var(--color-text-main)]">La papelera está vacía</h3>
+          <p class="text-xs max-w-sm">No hay ningún archivo o carpeta pendiente de purgar o restaurar.</p>
+        </div>
+      } @else {
+        <div class="w-full overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-white/10 bg-white/[0.02] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                <th class="py-3 px-4">Nombre del Elemento</th>
+                <th class="py-3 px-4">Tipo</th>
+                <th class="py-3 px-4">Tamaño</th>
+                <th class="py-3 px-4">Fecha de Eliminación</th>
+                <th class="py-3 px-4 text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              @for (item of filteredItems(); track item._id) {
+                <tr class="transition-colors hover:bg-white/[0.03]">
+                  <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">
+                    <div class="flex items-center gap-2.5">
+                      <div class="w-8 h-8 rounded-lg flex items-center justify-center"
+                        [class.bg-purple-500-15]="item.type === 'folder'"
+                        [class.text-purple-400]="item.type === 'folder'"
+                        [class.bg-cyan-500-15]="item.type === 'md'"
+                        [class.text-cyan-400]="item.type === 'md'"
+                        [class.bg-orange-500-15]="item.type === 'txt'"
+                        [class.text-orange-400]="item.type === 'txt'"
+                      >
+                        <mat-icon class="!text-lg">
+                          {{ item.type === 'folder' ? 'folder' : item.type === 'md' ? 'article' : 'description' }}
+                        </mat-icon>
+                      </div>
+                      <span class="truncate max-w-[280px]" [title]="item.name">{{ item.name }}</span>
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-mono font-medium uppercase"
+                      [class.bg-purple-500-15]="item.type === 'folder'"
+                      [class.text-purple-400]="item.type === 'folder'"
+                      [class.bg-cyan-500-15]="item.type === 'md'"
+                      [class.text-cyan-400]="item.type === 'md'"
+                      [class.bg-orange-500-15]="item.type === 'txt'"
+                      [class.text-orange-400]="item.type === 'txt'"
+                    >
+                      {{ item.type === 'folder' ? 'Carpeta' : item.type.toUpperCase() }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 font-mono text-xs text-[var(--color-text-muted)]">
+                    {{ formatBytes(item.sizeBytes) }}
+                  </td>
+                  <td class="py-3.5 px-4 text-xs text-[var(--color-text-muted)]">
+                    {{ formatDate(item.deletedAt) }}
+                  </td>
+                  <td class="py-3.5 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1">
+                      <button 
+                        mat-icon-button 
+                        color="primary" 
+                        (click)="restoreItem(item)" 
+                        [disabled]="restoringId() === item._id" 
+                        title="Restaurar elemento"
+                      >
+                        <mat-icon>restore_from_trash</mat-icon>
+                      </button>
+                      <button 
+                        mat-icon-button 
+                        color="warn" 
+                        (click)="purgeItem(item)" 
+                        [disabled]="purgingId() === item._id" 
+                        title="Eliminar permanentemente"
+                      >
+                        <mat-icon>delete_forever</mat-icon>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

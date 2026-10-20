@@ -2,7 +2,6 @@
   <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <div>
       <h1 class="text-2xl font-extrabold tracking-tight text-[var(--color-text-main)]">Auditoría y Actividad</h1>
-      <p class="text-sm text-[var(--color-text-muted)] mt-1">Registro cronológico de todas las operaciones realizadas en el repositorio.</p>
     </div>
     <div class="flex items-center gap-3">
       <button mat-stroked-button color="primary" (click)="loadLogs()" [disabled]="loading" class="!rounded-xl">
@@ -15,7 +14,7 @@
   <mat-card appearance="outlined" class="!bg-[var(--color-bg-soft)] !border-white/10 !rounded-2xl">
     <mat-card-content class="flex flex-wrap items-center justify-between gap-4 !p-4">
       <div class="flex flex-wrap items-center gap-3 flex-1">
-        <mat-form-field appearance="outline" class="flex-1 min-w-[240px] max-w-md mb-[-1.25em]">
+        <mat-form-field appearance="outline" floatLabel="always" class="flex-1 min-w-[240px] max-w-md mb-[-1.25em]">
           <mat-label>Buscar en auditoría</mat-label>
           <mat-icon matPrefix class="mr-2">search</mat-icon>
           <input 

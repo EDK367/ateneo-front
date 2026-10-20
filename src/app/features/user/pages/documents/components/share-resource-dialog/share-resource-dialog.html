@@ -32,7 +32,7 @@
         </span>
       </div>
       <div class="flex items-center gap-2">
-        <div class="flex-1 bg-[#0b1220] px-3 py-2 rounded-lg border border-white/10 text-xs font-mono text-cyan-300 truncate select-all">
+        <div class="flex-1 bg-[color-mix(in_srgb,var(--color-bg-light)_80%,transparent)] px-3 py-2 rounded-lg border border-[color-mix(in_srgb,var(--color-text-main)_12%,transparent)] text-xs font-mono text-[var(--color-primary)] truncate select-all">
           {{ shareLink() }}
         </div>
         <button 
@@ -53,7 +53,7 @@
       </span>
 
       <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-        <mat-form-field appearance="outline" class="w-full md:col-span-7" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" floatLabel="always" class="w-full md:col-span-7" subscriptSizing="dynamic">
           <mat-label>Seleccionar usuario</mat-label>
           <mat-select [(value)]="selectedUserId">
             @for (user of users(); track user._id) {
@@ -68,7 +68,7 @@
           <mat-icon matPrefix class="mr-2 text-cyan-400">person_add</mat-icon>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="w-full md:col-span-5" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" floatLabel="always" class="w-full md:col-span-5" subscriptSizing="dynamic">
           <mat-label>Permiso</mat-label>
           <mat-select [(value)]="selectedPermission">
             <mat-option value="read">

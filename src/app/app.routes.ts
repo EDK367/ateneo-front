@@ -1,13 +1,16 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard, roleGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/login/login').then(m => m.Login)
   },
   {
     path: 'admin',
+    canActivate: [authGuard, roleGuard(['admin'])],
     loadComponent: () =>
       import('./features/admin/admin').then(m => m.Admin),
     children: [
@@ -25,6 +28,26 @@ export const routes: Routes = [
         path: 'documents',
         loadComponent: () =>
           import('./features/user/pages/documents/documents').then(m => m.DocumentsComponent)
+      },
+      {
+        path: 'shared',
+        loadComponent: () =>
+          import('./features/admin/pages/shared/shared').then(m => m.Shared)
+      },
+      {
+        path: 'trash',
+        loadComponent: () =>
+          import('./features/admin/pages/trash/trash').then(m => m.Trash)
+      },
+      {
+        path: 'audit-logs',
+        loadComponent: () =>
+          import('./features/admin/pages/audit-logs/audit-logs').then(m => m.AuditLogs)
+      },
+      {
+        path: 'activity',
+        redirectTo: 'audit-logs',
+        pathMatch: 'full'
       },
       {
         path: 'reports',
@@ -47,16 +70,6 @@ export const routes: Routes = [
           import('./features/admin/pages/reports/reports').then(m => m.Reports)
       },
       {
-        path: 'audit-logs',
-        loadComponent: () =>
-          import('./features/admin/pages/audit-logs/audit-logs').then(m => m.AuditLogs)
-      },
-      {
-        path: 'activity',
-        redirectTo: 'audit-logs',
-        pathMatch: 'full'
-      },
-      {
         path: 'profile',
         loadComponent: () =>
           import('./features/admin/pages/profile/profile').then(m => m.Profile)
@@ -72,16 +85,6 @@ export const routes: Routes = [
           import('./features/admin/pages/profile/profile').then(m => m.Profile)
       },
       {
-        path: 'shared',
-        loadComponent: () =>
-          import('./features/user/pages/documents/documents').then(m => m.DocumentsComponent)
-      },
-      {
-        path: 'trash',
-        loadComponent: () =>
-          import('./features/user/pages/documents/documents').then(m => m.DocumentsComponent)
-      },
-      {
         path: '',
         redirectTo: 'dashboard',
         pathMatch: 'full'
@@ -90,19 +93,10 @@ export const routes: Routes = [
   },
   {
     path: 'user',
+    canActivate: [authGuard, roleGuard(['user', 'admin'])],
     loadComponent: () =>
       import('./features/user/user').then(m => m.UserComponent),
     children: [
-      {
-        path: 'profile',
-        loadComponent: () =>
-          import('./features/user/pages/profile/profile').then(m => m.Profile)
-      },
-      {
-        path: 'perfil',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
       {
         path: 'dashboard',
         loadComponent: () =>
@@ -115,23 +109,33 @@ export const routes: Routes = [
       },
       {
         path: 'shared',
-        redirectTo: 'profile',
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./features/admin/pages/shared/shared').then(m => m.Shared)
       },
       {
         path: 'trash',
-        redirectTo: 'profile',
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./features/admin/pages/trash/trash').then(m => m.Trash)
       },
       {
         path: 'activity',
+        loadComponent: () =>
+          import('./features/admin/pages/audit-logs/audit-logs').then(m => m.AuditLogs)
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/user/pages/profile/profile').then(m => m.Profile)
+      },
+      {
+        path: 'perfil',
         redirectTo: 'profile',
         pathMatch: 'full'
       },
       {
         path: 'settings',
-        redirectTo: 'profile',
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./features/user/pages/profile/profile').then(m => m.Profile)
       },
       {
         path: '',

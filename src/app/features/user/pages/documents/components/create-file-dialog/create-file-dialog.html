@@ -28,8 +28,9 @@
       </ng-template>
 
       <div class="flex flex-col gap-3 pt-4">
-        <mat-form-field appearance="outline" class="w-full">
-          <input matInput [(ngModel)]="folderName" placeholder="Nombre de la carpeta" required (keyup.enter)="save()" />
+        <mat-form-field appearance="outline" floatLabel="always" class="w-full">
+          <mat-label>Nombre de la carpeta</mat-label>
+          <input matInput [(ngModel)]="folderName" placeholder="Ingresa el nombre de la carpeta" required (keyup.enter)="save()" />
           <mat-icon matPrefix class="mr-2 text-[var(--color-primary)]">folder</mat-icon>
         </mat-form-field>
         <span class="text-xs text-[var(--color-text-muted)]">La carpeta se creará dentro del directorio actual: {{ targetLocation }}.</span>
@@ -82,7 +83,8 @@
           </div>
         }
 
-        <mat-form-field appearance="outline" class="w-full mt-1">
+        <mat-form-field appearance="outline" floatLabel="always" class="w-full mt-1">
+          <mat-label>Etiquetas</mat-label>
           <input matInput [(ngModel)]="tagsString" placeholder="Etiquetas (opcional, separadas por coma)" />
           <mat-icon matPrefix class="mr-2 text-[var(--color-text-muted)]">label</mat-icon>
         </mat-form-field>
@@ -100,7 +102,7 @@
       mat-flat-button 
       (click)="save()" 
       [disabled]="isSaveDisabled()" 
-      class="px-5 py-2 font-bold rounded-lg !bg-[var(--color-primary)] !Etiquetext-[#0B1220]">
+      class="px-5 py-2 font-bold rounded-lg !bg-[var(--color-primary)] !text-slate-950">
       @if (loading) {
         <span class="flex items-center gap-2">
           <mat-spinner diameter="18" strokeWidth="2.5"></mat-spinner>
