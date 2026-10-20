@@ -1,0 +1,267 @@
+<div class="flex flex-col gap-6 max-w-[1400px] mx-auto w-full">
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold tracking-tight text-[var(--color-text-main)]">Panel de Administración</h1>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">Supervisión integral de usuarios, almacenamiento y actividad en Ateneo.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <a mat-flat-button color="primary" routerLink="/admin/users" [queryParams]="{ action: 'new' }" class="!rounded-xl font-bold">
+        <mat-icon>person_add</mat-icon>
+        <span>Nuevo usuario</span>
+      </a>
+    </div>
+  </header>
+
+  <div class="relative overflow-hidden p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900 to-cyan-950/40 border border-cyan-500/20 shadow-xl">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-2">
+          <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span> Sistema Operativo
+        </span>
+        <h2 class="text-2xl font-black text-[var(--color-text-main)]">¡Bienvenido de nuevo, {{ userName() }}!</h2>
+        <p class="text-sm text-[var(--color-text-muted)] mt-1 max-w-xl">
+          Supervisa el rendimiento del servidor, gestiona permisos de acceso y consulta el volumen global de archivos documentales.
+        </p>
+      </div>
+      <div class="flex items-center gap-2">
+        <a mat-stroked-button color="primary" routerLink="/admin/reports" class="!rounded-xl">
+          <mat-icon>bar_chart</mat-icon>
+          <span>Ver Reportes</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <section class="flex flex-col gap-3">
+    <h3 class="text-sm font-bold uppercase tracking-wider text-[var(--color-text-muted)]">Accesos Directos</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <a routerLink="/admin/users" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-cyan-500/50 hover:bg-white/[0.02] transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <mat-icon>manage_accounts</mat-icon>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-[var(--color-text-main)]">Gestión de Usuarios</h4>
+            <span class="text-xs text-[var(--color-text-muted)]">Crear y administrar cuentas</span>
+          </div>
+        </div>
+        <mat-icon class="text-[var(--color-text-muted)] group-hover:text-cyan-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
+      </a>
+
+      <a routerLink="/admin/reports" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-purple-500/50 hover:bg-white/[0.02] transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <mat-icon>insights</mat-icon>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-[var(--color-text-main)]">Módulo de Reportes</h4>
+            <span class="text-xs text-[var(--color-text-muted)]">Estadísticas y cuotas</span>
+          </div>
+        </div>
+        <mat-icon class="text-[var(--color-text-muted)] group-hover:text-purple-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
+      </a>
+
+      <a routerLink="/admin/documents" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-emerald-500/50 hover:bg-white/[0.02] transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <mat-icon>folder_open</mat-icon>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-[var(--color-text-main)]">Documentos Globales</h4>
+            <span class="text-xs text-[var(--color-text-muted)]">Explorador de archivos</span>
+          </div>
+        </div>
+        <mat-icon class="text-[var(--color-text-muted)] group-hover:text-emerald-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
+      </a>
+
+      <a routerLink="/admin/audit-logs" class="group flex items-center justify-between p-4 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 hover:border-orange-500/50 hover:bg-white/[0.02] transition-all duration-200">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-orange-500/15 text-orange-400 flex items-center justify-center group-hover:scale-105 transition-transform">
+            <mat-icon>security</mat-icon>
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-[var(--color-text-main)]">Auditoría y Logs</h4>
+            <span class="text-xs text-[var(--color-text-muted)]">Historial de operaciones</span>
+          </div>
+        </div>
+        <mat-icon class="text-[var(--color-text-muted)] group-hover:text-orange-400 group-hover:translate-x-1 transition-all">chevron_right</mat-icon>
+      </a>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="p-5 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+        <mat-icon class="!text-2xl">people</mat-icon>
+      </div>
+      <div>
+        <span class="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Usuarios Registrados</span>
+        <div class="text-2xl font-black text-[var(--color-text-main)] mt-0.5">
+          {{ loadingUsers() ? '...' : totalUsers() }}
+        </div>
+        <span class="text-xs text-emerald-400 font-medium">
+          {{ activeUsers() }} activos · {{ inactiveUsers() }} inactivos
+        </span>
+      </div>
+    </div>
+
+    <div class="p-5 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0">
+        <mat-icon class="!text-2xl">data_usage</mat-icon>
+      </div>
+      <div>
+        <span class="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Almacenamiento en Uso</span>
+        <div class="text-2xl font-black text-[var(--color-text-main)] mt-0.5">
+          {{ loadingStats() ? '...' : formatBytes(stats()?.storageUsedBytes) }}
+        </div>
+        <span class="text-xs text-[var(--color-text-muted)]">
+          {{ stats()?.storagePercentage || 0 }}% de 5.0 GB cuota
+        </span>
+      </div>
+    </div>
+
+    <div class="p-5 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center shrink-0">
+        <mat-icon class="!text-2xl">description</mat-icon>
+      </div>
+      <div>
+        <span class="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Documentos Activos</span>
+        <div class="text-2xl font-black text-[var(--color-text-main)] mt-0.5">
+          {{ loadingStats() ? '...' : (stats()?.totalFiles || 0) }}
+        </div>
+        <span class="text-xs text-[var(--color-text-muted)]">
+          {{ stats()?.mdCount || 0 }} .md · {{ stats()?.txtCount || 0 }} .txt
+        </span>
+      </div>
+    </div>
+
+    <div class="p-5 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 flex items-center gap-4">
+      <div class="w-12 h-12 rounded-xl bg-orange-500/15 text-orange-400 flex items-center justify-center shrink-0">
+        <mat-icon class="!text-2xl">share</mat-icon>
+      </div>
+      <div>
+        <span class="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Recursos Compartidos</span>
+        <div class="text-2xl font-black text-[var(--color-text-main)] mt-0.5">
+          {{ loadingStats() ? '...' : (stats()?.sharedCount || 0) }}
+        </div>
+        <span class="text-xs text-[var(--color-text-muted)]">
+          {{ stats()?.foldersCount || 0 }} carpetas creadas
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="p-6 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 flex flex-col justify-between gap-6">
+      <div>
+        <div class="flex items-center justify-between">
+          <h3 class="text-base font-bold text-[var(--color-text-main)]">Distribución de Almacenamiento</h3>
+          <span class="text-xs font-mono font-bold text-cyan-400">{{ stats()?.storagePercentage || 0 }}%</span>
+        </div>
+        <p class="text-xs text-[var(--color-text-muted)] mt-1">Uso acumulado en MongoDB / GridFS</p>
+
+        <div class="w-full h-3 rounded-full bg-white/5 overflow-hidden mt-4">
+          <div 
+            class="h-full rounded-full bg-gradient-to-r from-cyan-500 via-purple-500 to-orange-500 transition-all duration-500"
+            [style.width.%]="stats()?.storagePercentage || 1"
+          ></div>
+        </div>
+
+        <div class="mt-6 flex flex-col gap-3">
+          <div class="flex items-center justify-between text-xs p-3 rounded-xl bg-white/[0.02] border border-white/5">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+              <span class="text-[var(--color-text-main)] font-medium">Documentos Markdown (.md)</span>
+            </div>
+            <span class="font-bold text-[var(--color-text-main)]">{{ stats()?.mdCount || 0 }}</span>
+          </div>
+
+          <div class="flex items-center justify-between text-xs p-3 rounded-xl bg-white/[0.02] border border-white/5">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span>
+              <span class="text-[var(--color-text-main)] font-medium">Archivos de Texto (.txt)</span>
+            </div>
+            <span class="font-bold text-[var(--color-text-main)]">{{ stats()?.txtCount || 0 }}</span>
+          </div>
+
+          <div class="flex items-center justify-between text-xs p-3 rounded-xl bg-white/[0.02] border border-white/5">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span>
+              <span class="text-[var(--color-text-main)] font-medium">Estructura de Carpetas</span>
+            </div>
+            <span class="font-bold text-[var(--color-text-main)]">{{ stats()?.foldersCount || 0 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <a mat-stroked-button color="primary" routerLink="/admin/reports/storage" class="w-full !rounded-xl">
+        Ver Detalle de Cuotas
+      </a>
+    </div>
+
+    <div class="lg:col-span-2 p-6 rounded-2xl bg-[var(--color-bg-soft)] border border-white/10 flex flex-col justify-between gap-4">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-base font-bold text-[var(--color-text-main)]">Actividad Reciente del Sistema</h3>
+            <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Últimas acciones registradas en la plataforma</p>
+          </div>
+          <a mat-button color="primary" routerLink="/admin/audit-logs" class="!text-xs">
+            <span>Ver todo</span>
+            <mat-icon class="!text-sm">arrow_forward</mat-icon>
+          </a>
+        </div>
+
+        @if (loadingActivity()) {
+          <div class="flex flex-col items-center justify-center p-10 text-center text-[var(--color-text-muted)] gap-2">
+            <mat-spinner diameter="32"></mat-spinner>
+            <span class="text-xs">Cargando eventos de auditoría...</span>
+          </div>
+        } @else if (recentActivities().length === 0) {
+          <div class="flex flex-col items-center justify-center p-10 text-center text-[var(--color-text-muted)] gap-1">
+            <mat-icon class="text-slate-500">history</mat-icon>
+            <p class="text-xs">No hay actividad registrada recientemente.</p>
+          </div>
+        } @else {
+          <div class="w-full overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-white/10 text-[var(--color-text-muted)] uppercase tracking-wider">
+                  <th class="py-2.5 px-3">Acción</th>
+                  <th class="py-2.5 px-3">Recurso</th>
+                  <th class="py-2.5 px-3">Tipo</th>
+                  <th class="py-2.5 px-3 text-right">Tiempo</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-white/5">
+                @for (act of recentActivities(); track act._id) {
+                  <tr class="hover:bg-white/[0.02] transition-colors">
+                    <td class="py-2.5 px-3">
+                      <span class="inline-flex items-center px-2 py-0.5 rounded-full font-semibold text-[10px]" [ngClass]="getActionBadgeClass(act.action)">
+                        {{ getActionLabel(act.action) }}
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3 font-medium text-[var(--color-text-main)] truncate max-w-[200px]">
+                      {{ act.resourceName || act.resourceId }}
+                    </td>
+                    <td class="py-2.5 px-3 text-[var(--color-text-muted)] uppercase text-[10px] font-mono">
+                      {{ act.resourceType }}
+                    </td>
+                    <td class="py-2.5 px-3 text-right text-[var(--color-text-muted)]">
+                      {{ formatRelativeTime(act.createdAt) }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <div class="pt-3 border-t border-white/5 flex items-center justify-between text-xs text-[var(--color-text-muted)]">
+        <span>Registro de auditoría continuo</span>
+        <span class="font-mono">{{ recentActivities().length }} eventos recientes</span>
+      </div>
+    </div>
+  </div>
+</div>

@@ -3,6 +3,9 @@ import { ApiService } from './config/api';
 import { Observable } from 'rxjs';
 
 export interface DashboardStatsResponse {
+  totalUsers?: number;
+  activeUsers?: number;
+  inactiveUsers?: number;
   storageUsedBytes: number;
   storageLimitBytes: number;
   storagePercentage: number;
@@ -11,8 +14,8 @@ export interface DashboardStatsResponse {
   totalFiles: number;
   foldersCount: number;
   sharedCount: number;
-  sharedByMeCount: number;
-  sharedWithMeCount: number;
+  sharedByMeCount?: number;
+  sharedWithMeCount?: number;
 }
 
 @Injectable({
@@ -21,5 +24,9 @@ export interface DashboardStatsResponse {
 export class ReportService extends ApiService {
   getStats(): Observable<DashboardStatsResponse> {
     return this.get<DashboardStatsResponse>('/report/stats');
+  }
+
+  getGlobalStats(): Observable<DashboardStatsResponse> {
+    return this.get<DashboardStatsResponse>('/report/global');
   }
 }

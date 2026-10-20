@@ -12,6 +12,51 @@ export const routes: Routes = [
       import('./features/admin/admin').then(m => m.Admin),
     children: [
       {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./features/admin/pages/dashboard/dashboard').then(m => m.Dashboard)
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/pages/users/users').then(m => m.Users)
+      },
+      {
+        path: 'documents',
+        loadComponent: () =>
+          import('./features/user/pages/documents/documents').then(m => m.DocumentsComponent)
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/admin/pages/reports/reports').then(m => m.Reports)
+      },
+      {
+        path: 'reports/storage',
+        loadComponent: () =>
+          import('./features/admin/pages/reports/reports').then(m => m.Reports)
+      },
+      {
+        path: 'reports/users',
+        loadComponent: () =>
+          import('./features/admin/pages/reports/reports').then(m => m.Reports)
+      },
+      {
+        path: 'reports/activity',
+        loadComponent: () =>
+          import('./features/admin/pages/reports/reports').then(m => m.Reports)
+      },
+      {
+        path: 'audit-logs',
+        loadComponent: () =>
+          import('./features/admin/pages/audit-logs/audit-logs').then(m => m.AuditLogs)
+      },
+      {
+        path: 'activity',
+        redirectTo: 'audit-logs',
+        pathMatch: 'full'
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/admin/pages/profile/profile').then(m => m.Profile)
@@ -22,68 +67,23 @@ export const routes: Routes = [
         pathMatch: 'full'
       },
       {
-        path: 'dashboard',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'documents',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'users',
-        redirectTo: 'profile',
-        pathMatch: 'full'
+        path: 'settings',
+        loadComponent: () =>
+          import('./features/admin/pages/profile/profile').then(m => m.Profile)
       },
       {
         path: 'shared',
-        redirectTo: 'profile',
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./features/user/pages/documents/documents').then(m => m.DocumentsComponent)
       },
       {
         path: 'trash',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'audit-logs',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'activity',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'reports',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'reports/storage',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'reports/users',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'reports/activity',
-        redirectTo: 'profile',
-        pathMatch: 'full'
-      },
-      {
-        path: 'settings',
-        redirectTo: 'profile',
-        pathMatch: 'full'
+        loadComponent: () =>
+          import('./features/user/pages/documents/documents').then(m => m.DocumentsComponent)
       },
       {
         path: '',
-        redirectTo: 'profile',
+        redirectTo: 'dashboard',
         pathMatch: 'full'
       }
     ]

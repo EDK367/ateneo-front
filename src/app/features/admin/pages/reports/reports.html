@@ -1,0 +1,331 @@
+<div class="flex flex-col gap-6 max-w-[1400px] mx-auto w-full">
+  <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-extrabold tracking-tight text-[var(--color-text-main)]">Módulo de Reportes</h1>
+      <p class="text-sm text-[var(--color-text-muted)] mt-1">Estadísticas analíticas de almacenamiento, usuarios y eventos del sistema.</p>
+    </div>
+    <div class="flex items-center gap-3">
+      <button mat-stroked-button color="primary" (click)="loadData()" [disabled]="loading()" class="!rounded-xl">
+        <mat-icon>refresh</mat-icon>
+        <span>Actualizar Datos</span>
+      </button>
+    </div>
+  </header>
+
+  <mat-card appearance="outlined" class="!bg-[var(--color-bg-soft)] !border-white/10 !rounded-2xl overflow-hidden">
+    <mat-tab-group 
+      [selectedIndex]="selectedTabIndex()" 
+      (selectedIndexChange)="onTabChange($event)"
+      animationDuration="200ms"
+      class="border-b border-white/10"
+    >
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <div class="flex items-center gap-2 py-2">
+            <mat-icon class="!text-lg">inventory_2</mat-icon>
+            <span class="font-semibold text-sm">Archivos y Almacenamiento</span>
+          </div>
+        </ng-template>
+
+        <div class="p-6 flex flex-col gap-6">
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="p-6 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between gap-4">
+              <div>
+                <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Cuota de Disco</span>
+                <h3 class="text-3xl font-black text-[var(--color-text-main)] mt-2">
+                  {{ formatBytes(stats()?.storageUsedBytes) }}
+                </h3>
+                <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                  de 5.0 GB cuota máxima asignada
+                </p>
+
+                <div class="w-full h-3 rounded-full bg-white/5 overflow-hidden mt-5">
+                  <div 
+                    class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-purple-600 transition-all duration-500"
+                    [style.width.%]="stats()?.storagePercentage || 1"
+                  ></div>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-4 border-t border-white/5 text-xs text-[var(--color-text-muted)]">
+                <span>Porcentaje de uso:</span>
+                <span class="font-bold text-[var(--color-text-main)]">{{ stats()?.storagePercentage || 0 }}%</span>
+              </div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between gap-4">
+              <div>
+                <span class="text-xs font-semibold text-purple-400 uppercase tracking-wider">Documentos Markdown</span>
+                <h3 class="text-3xl font-black text-[var(--color-text-main)] mt-2">
+                  {{ stats()?.mdCount || 0 }}
+                </h3>
+                <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                  archivos con extensión .md
+                </p>
+
+                <div class="flex items-center gap-2 mt-4 text-xs text-[var(--color-text-muted)]">
+                  <mat-icon class="!text-base text-purple-400">article</mat-icon>
+                  <span>Almacenados en GridFS</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-4 border-t border-white/5 text-xs text-[var(--color-text-muted)]">
+                <span>Estado:</span>
+                <span class="text-emerald-400 font-semibold">Indexado</span>
+              </div>
+            </div>
+
+            <div class="p-6 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col justify-between gap-4">
+              <div>
+                <span class="text-xs font-semibold text-orange-400 uppercase tracking-wider">Archivos de Texto</span>
+                <h3 class="text-3xl font-black text-[var(--color-text-main)] mt-2">
+                  {{ stats()?.txtCount || 0 }}
+                </h3>
+                <p class="text-xs text-[var(--color-text-muted)] mt-1">
+                  archivos de texto plano .txt
+                </p>
+
+                <div class="flex items-center gap-2 mt-4 text-xs text-[var(--color-text-muted)]">
+                  <mat-icon class="!text-base text-orange-400">description</mat-icon>
+                  <span>Codificación UTF-8</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between pt-4 border-t border-white/5 text-xs text-[var(--color-text-muted)]">
+                <span>Total Archivos:</span>
+                <span class="font-bold text-[var(--color-text-main)]">{{ stats()?.totalFiles || 0 }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-6 rounded-2xl bg-white/[0.02] border border-white/10">
+            <h4 class="text-base font-bold text-[var(--color-text-main)] mb-1">Métricas Generales de la Estructura</h4>
+            <p class="text-xs text-[var(--color-text-muted)] mb-5">Resumen cuantitativo de los recursos creados en el repositorio.</p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <span class="text-xs text-[var(--color-text-muted)]">Total de Archivos</span>
+                <p class="text-xl font-bold text-[var(--color-text-main)] mt-1">{{ stats()?.totalFiles || 0 }}</p>
+              </div>
+
+              <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <span class="text-xs text-[var(--color-text-muted)]">Total de Carpetas</span>
+                <p class="text-xl font-bold text-[var(--color-text-main)] mt-1">{{ stats()?.foldersCount || 0 }}</p>
+              </div>
+
+              <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <span class="text-xs text-[var(--color-text-muted)]">Documentos Markdown</span>
+                <p class="text-xl font-bold text-cyan-400 mt-1">{{ stats()?.mdCount || 0 }}</p>
+              </div>
+
+              <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+                <span class="text-xs text-[var(--color-text-muted)]">Archivos de Texto</span>
+                <p class="text-xl font-bold text-orange-400 mt-1">{{ stats()?.txtCount || 0 }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <div class="flex items-center gap-2 py-2">
+            <mat-icon class="!text-lg">group</mat-icon>
+            <span class="font-semibold text-sm">Usuarios y Compartición</span>
+          </div>
+        </ng-template>
+
+        <div class="p-6 flex flex-col gap-6">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-cyan-500/15 text-cyan-400 flex items-center justify-center shrink-0">
+                <mat-icon>people</mat-icon>
+              </div>
+              <div>
+                <span class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider font-semibold">Total Usuarios</span>
+                <div class="text-2xl font-black text-[var(--color-text-main)] mt-0.5">{{ users().length }}</div>
+                <span class="text-xs text-emerald-400 font-medium">Cuentas activas e indexadas</span>
+              </div>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center shrink-0">
+                <mat-icon>folder_shared</mat-icon>
+              </div>
+              <div>
+                <span class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider font-semibold">Compartidos por mí</span>
+                <div class="text-2xl font-black text-[var(--color-text-main)] mt-0.5">{{ stats()?.sharedByMeCount || 0 }}</div>
+                <span class="text-xs text-[var(--color-text-muted)]">Recursos salientes</span>
+              </div>
+            </div>
+
+            <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/10 flex items-center gap-4">
+              <div class="w-12 h-12 rounded-xl bg-orange-500/15 text-orange-400 flex items-center justify-center shrink-0">
+                <mat-icon>share</mat-icon>
+              </div>
+              <div>
+                <span class="text-xs text-[var(--color-text-muted)] uppercase tracking-wider font-semibold">Compartidos conmigo</span>
+                <div class="text-2xl font-black text-[var(--color-text-main)] mt-0.5">{{ stats()?.sharedWithMeCount || 0 }}</div>
+                <span class="text-xs text-[var(--color-text-muted)]">Recursos entrantes</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-2xl bg-white/[0.02] border border-white/10 overflow-hidden">
+            <div class="p-5 border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h4 class="text-base font-bold text-[var(--color-text-main)]">Consumo de Espacio por Usuario</h4>
+                <p class="text-xs text-[var(--color-text-muted)] mt-0.5">Usuarios ordenados por mayor uso de almacenamiento</p>
+              </div>
+              <a mat-stroked-button color="primary" routerLink="/admin/users" class="!rounded-xl text-xs">
+                Gestionar Usuarios
+              </a>
+            </div>
+
+            <div class="w-full overflow-x-auto">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                    <th class="py-3 px-4">#</th>
+                    <th class="py-3 px-4">Usuario</th>
+                    <th class="py-3 px-4">Correo</th>
+                    <th class="py-3 px-4">Rol</th>
+                    <th class="py-3 px-4">Almacenamiento</th>
+                    <th class="py-3 px-4">Estatus</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-white/5">
+                  @for (u of users(); track u._id; let idx = $index) {
+                    <tr class="hover:bg-white/[0.02] transition-colors">
+                      <td class="py-3.5 px-4 text-xs font-mono text-[var(--color-text-muted)]">{{ idx + 1 }}</td>
+                      <td class="py-3.5 px-4">
+                        <div class="flex items-center gap-3">
+                          <span class="w-8 h-8 rounded-full bg-cyan-500/15 text-cyan-400 font-bold text-xs flex items-center justify-center uppercase">
+                            {{ u.username ? u.username.charAt(0) : 'U' }}
+                          </span>
+                          <span class="font-semibold text-[var(--color-text-main)]">{{ u.username }}</span>
+                        </div>
+                      </td>
+                      <td class="py-3.5 px-4 text-xs text-[var(--color-text-muted)]">{{ u.email }}</td>
+                      <td class="py-3.5 px-4">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                          [class.bg-cyan-500-15]="u.role === 'admin'"
+                          [class.text-cyan-400]="u.role === 'admin'"
+                          [class.bg-slate-700]="u.role !== 'admin'"
+                          [class.text-slate-300]="u.role !== 'admin'"
+                        >
+                          {{ u.role === 'admin' ? 'Administrador' : 'Usuario' }}
+                        </span>
+                      </td>
+                      <td class="py-3.5 px-4 font-mono text-xs font-bold text-cyan-400">
+                        {{ formatBytes(u.storageUsedBytes) }}
+                      </td>
+                      <td class="py-3.5 px-4">
+                        @if (u.isActive !== false) {
+                          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Activo
+                          </span>
+                        } @else {
+                          <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Inactivo
+                          </span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <div class="flex items-center gap-2 py-2">
+            <mat-icon class="!text-lg">history</mat-icon>
+            <span class="font-semibold text-sm">Actividad del Sistema</span>
+          </div>
+        </ng-template>
+
+        <div class="p-6 flex flex-col gap-6">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex flex-wrap items-center gap-2">
+              @for (f of actionFilters; track f.id) {
+                <button 
+                  type="button" 
+                  (click)="setActionFilter(f.id)"
+                  class="px-3 py-1.5 rounded-xl text-xs font-semibold transition-all border"
+                  [class.bg-cyan-500]="selectedActionFilter() === f.id"
+                  [class.text-slate-950]="selectedActionFilter() === f.id"
+                  [class.border-cyan-500]="selectedActionFilter() === f.id"
+                  [class.bg-white-5]="selectedActionFilter() !== f.id"
+                  [class.text-slate-400]="selectedActionFilter() !== f.id"
+                  [class.border-white-10]="selectedActionFilter() !== f.id"
+                >
+                  {{ f.label }}
+                </button>
+              }
+            </div>
+
+            <span class="text-xs text-[var(--color-text-muted)] font-mono">
+              {{ filteredActivities().length }} eventos mostrados
+            </span>
+          </div>
+
+          <div class="rounded-2xl bg-white/[0.02] border border-white/10 overflow-hidden">
+            @if (loading()) {
+              <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--color-text-muted)] gap-3">
+                <mat-spinner diameter="36"></mat-spinner>
+                <p class="text-xs">Cargando eventos de auditoría...</p>
+              </div>
+            } @else if (filteredActivities().length === 0) {
+              <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--color-text-muted)] gap-2">
+                <mat-icon class="text-slate-500">search_off</mat-icon>
+                <p class="text-sm font-semibold text-[var(--color-text-main)]">Sin eventos para esta acción</p>
+                <span class="text-xs">Intenta seleccionando otro filtro de evento.</span>
+              </div>
+            } @else {
+              <div class="w-full overflow-x-auto">
+                <table class="w-full text-left border-collapse text-sm">
+                  <thead>
+                    <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                      <th class="py-3 px-4">Acción</th>
+                      <th class="py-3 px-4">Tipo Recurso</th>
+                      <th class="py-3 px-4">Nombre / Recurso</th>
+                      <th class="py-3 px-4">ID Recurso</th>
+                      <th class="py-3 px-4 text-right">Fecha / Hora</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-white/5">
+                    @for (act of filteredActivities(); track act._id) {
+                      <tr class="hover:bg-white/[0.02] transition-colors">
+                        <td class="py-3 px-4">
+                          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold" [ngClass]="getActionBadgeClass(act.action)">
+                            {{ getActionLabel(act.action) }}
+                          </span>
+                        </td>
+                        <td class="py-3 px-4 text-xs font-mono uppercase text-[var(--color-text-muted)]">
+                          {{ act.resourceType }}
+                        </td>
+                        <td class="py-3 px-4 font-semibold text-[var(--color-text-main)]">
+                          {{ act.resourceName || '—' }}
+                        </td>
+                        <td class="py-3 px-4 font-mono text-xs text-[var(--color-text-muted)]">
+                          {{ act.resourceId.slice(-8) }}
+                        </td>
+                        <td class="py-3 px-4 text-right text-xs text-[var(--color-text-muted)]">
+                          {{ formatRelativeTime(act.createdAt) }} ({{ formatDate(act.createdAt) }})
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </mat-card>
+</div>
