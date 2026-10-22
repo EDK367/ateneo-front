@@ -14,6 +14,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ShareService } from '../../../../core/services/share';
 import { NotificationService } from '../../../../core/services/config/notification';
 import { SharedResourceResponse, SharePermission } from '../../../../core/models/share';
+import { forkJoin } from 'rxjs';
 
 interface EnrichedShareItem extends SharedResourceResponse {
   direction: 'by-me' | 'with-me';
@@ -75,10 +76,31 @@ export class Shared implements OnInit {
         this.cdr.detectChanges();
       },
       error: () => {
-        this.allShares.set([]);
-        this.applyFilter();
-        this.loading.set(false);
-        this.cdr.detectChanges();
+        forkJoin({
+          byMe: this.shareService.findSharedByMe(),
+          withMe: this.shareService.findSharedWithMe()
+        }).subscribe({
+          next: ({ byMe, withMe }) => {
+            const mappedByMe: EnrichedShareItem[] = (byMe || []).map(item => ({
+              ...item,
+              direction: 'by-me'
+            }));
+            const mappedWithMe: EnrichedShareItem[] = (withMe || []).map(item => ({
+              ...item,
+              direction: 'with-me'
+            }));
+            this.allShares.set([...mappedByMe, ...mappedWithMe]);
+            this.applyFilter();
+            this.loading.set(false);
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.allShares.set([]);
+            this.applyFilter();
+            this.loading.set(false);
+            this.cdr.detectChanges();
+          }
+        });
       }
     });
   }

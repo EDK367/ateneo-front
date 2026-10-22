@@ -29,7 +29,7 @@ export interface SharedUserItem {
   userId: string;
   userName: string;
   userEmail: string;
-  permission: 'read' | 'edit';
+  permission: SharePermission;
 }
 
 @Component({
@@ -61,14 +61,11 @@ export class ShareResourceDialog implements OnInit {
 
   users = signal<UserResponse[]>([]);
   selectedUserId = signal<string>('');
-  selectedPermission = signal<'read' | 'edit'>('read');
+  selectedPermission = signal<SharePermission>('read');
   submitting = signal<boolean>(false);
   existingShares = signal<SharedUserItem[]>([]);
-  shareLink = signal<string>('');
 
   ngOnInit(): void {
-    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://ateneo.app';
-    this.shareLink.set(`${origin}/shared/${this.data.resourceType}/${this.data.resourceId}`);
     this.loadUsers();
     this.loadExistingShares();
   }
@@ -78,19 +75,29 @@ export class ShareResourceDialog implements OnInit {
     this.userService.findAll().subscribe({
       next: (users) => {
         if (users && users.length > 0) {
-          const filtered = users.filter(u => u._id !== currentUser?.userId);
+          const currentId = currentUser?.userId;
+          const currentEmail = currentUser?.email?.toLowerCase();
+          const filtered = users.filter(u =>
+            u._id !== currentId &&
+            (!currentEmail || u.email?.toLowerCase() !== currentEmail) &&
+            u.role?.toLowerCase() !== 'admin'
+          );
           this.users.set(filtered);
         } else {
-          this.users.set(this.getFallbackUsers(currentUser?.userId));
+          this.users.set(this.getFallbackUsers(currentUser?.userId, currentUser?.email));
         }
       },
       error: () => {
-        this.users.set(this.getFallbackUsers(currentUser?.userId));
+        this.users.set(this.getFallbackUsers(currentUser?.userId, currentUser?.email));
       }
     });
   }
 
-  private getFallbackUsers(currentUserId?: string): UserResponse[] {
+  isAlreadyShared(userId: string): boolean {
+    return this.existingShares().some(s => s.userId === userId);
+  }
+
+  private getFallbackUsers(currentUserId?: string, currentUserEmail?: string): UserResponse[] {
     const mockUsers: UserResponse[] = [
       {
         _id: 'usr-1',
@@ -121,20 +128,15 @@ export class ShareResourceDialog implements OnInit {
         storageUsedBytes: 512000,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
-      },
-      {
-        _id: 'usr-4',
-        username: 'Prof. David Ruiz',
-        email: 'david.ruiz@ateneo.edu',
-        role: 'admin',
-        isActive: true,
-        storageUsedBytes: 4096000,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
       }
     ];
 
-    return mockUsers.filter(u => u._id !== currentUserId);
+    const currentEmail = currentUserEmail?.toLowerCase();
+    return mockUsers.filter(u =>
+      u._id !== currentUserId &&
+      (!currentEmail || u.email?.toLowerCase() !== currentEmail) &&
+      u.role?.toLowerCase() !== 'admin'
+    );
   }
 
   loadExistingShares(): void {
@@ -145,12 +147,13 @@ export class ShareResourceDialog implements OnInit {
             .filter(s => s.resourceId === this.data.resourceId)
             .map(s => {
               const sharedWith = typeof s.sharedWithId === 'object' ? s.sharedWithId : null;
+              const perm = (s.permission === 'edit' || s.permission === 'comment') ? s.permission : 'read';
               return {
                 id: s._id,
                 userId: sharedWith?._id || (s.sharedWithId as string),
                 userName: sharedWith?.username || 'Usuario',
                 userEmail: sharedWith?.email || '',
-                permission: (s.permission === 'edit' ? 'edit' : 'read') as 'read' | 'edit'
+                permission: perm as SharePermission
               };
             });
           this.existingShares.set(relevant);
@@ -160,28 +163,6 @@ export class ShareResourceDialog implements OnInit {
         this.existingShares.set([]);
       }
     });
-  }
-
-  copyLink(): void {
-    if (navigator?.clipboard) {
-      navigator.clipboard.writeText(this.shareLink()).then(() => {
-        this.notificationService.showSuccess('Enlace copiado al portapapeles', 'Copiado');
-      }).catch(() => {
-        this.fallbackCopyLink();
-      });
-    } else {
-      this.fallbackCopyLink();
-    }
-  }
-
-  private fallbackCopyLink(): void {
-    const input = document.createElement('input');
-    input.value = this.shareLink();
-    document.body.appendChild(input);
-    input.select();
-    document.execCommand('copy');
-    document.body.removeChild(input);
-    this.notificationService.showSuccess('Enlace copiado al portapapeles', 'Copiado');
   }
 
   addShare(): void {
@@ -199,7 +180,7 @@ export class ShareResourceDialog implements OnInit {
       resourceType: this.data.resourceType,
       resourceId: this.data.resourceId,
       sharedWithId: targetUserId,
-      permission: permission as SharePermission
+      permission: permission
     }).subscribe({
       next: (res) => {
         this.submitting.set(false);
@@ -215,27 +196,33 @@ export class ShareResourceDialog implements OnInit {
         ]);
         this.selectedUserId.set('');
         this.notificationService.showSuccess(
-          `Recurso compartido con ${targetName} (${permission === 'read' ? 'Solo lectura' : 'Edición'})`,
+          `Recurso compartido con ${targetName} (${this.getPermissionLabel(permission)})`,
           'Compartido con éxito'
         );
       },
-      error: () => {
+      error: (err) => {
         this.submitting.set(false);
-        this.existingShares.update(list => [
-          ...list.filter(s => s.userId !== targetUserId),
-          {
-            id: 'share-' + Date.now(),
-            userId: targetUserId,
-            userName: targetName,
-            userEmail: targetEmail,
-            permission: permission
-          }
-        ]);
-        this.selectedUserId.set('');
-        this.notificationService.showSuccess(
-          `Recurso compartido con ${targetName} (${permission === 'read' ? 'Solo lectura' : 'Edición'})`,
-          'Compartido con éxito'
+        const msg = err?.error?.message || 'Error al compartir recurso';
+        this.notificationService.showError(msg, 'Error');
+      }
+    });
+  }
+
+  updateSharePermission(share: SharedUserItem, newPermission: SharePermission): void {
+    if (share.permission === newPermission) return;
+    this.shareService.updateAuthorization(share.id, { permission: newPermission }).subscribe({
+      next: () => {
+        this.existingShares.update(list =>
+          list.map(s => s.id === share.id ? { ...s, permission: newPermission } : s)
         );
+        this.notificationService.showSuccess(
+          `Permiso de ${share.userName} actualizado a ${this.getPermissionLabel(newPermission)}`,
+          'Permiso actualizado'
+        );
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'No se pudo actualizar el permiso';
+        this.notificationService.showError(msg, 'Error');
       }
     });
   }
@@ -251,6 +238,15 @@ export class ShareResourceDialog implements OnInit {
         this.notificationService.showSuccess(`Acceso revocado a ${share.userName}`, 'Revocado');
       }
     });
+  }
+
+  getPermissionLabel(perm: SharePermission): string {
+    switch (perm) {
+      case 'edit': return 'Edición';
+      case 'comment': return 'Comentario';
+      case 'read':
+      default: return 'Solo lectura';
+    }
   }
 
   close(): void {

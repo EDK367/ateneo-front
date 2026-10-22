@@ -50,7 +50,7 @@
         <h2 class="section-title">Archivos Sugeridos</h2>
         <span class="smart-badge">Sugerencias Inteligentes</span>
       </div>
-      <a href="javascript:void(0)" class="section-link with-icon">
+      <a routerLink="/user/activity" class="section-link with-icon">
         <span>Ver Historial</span>
         <mat-icon>arrow_forward</mat-icon>
       </a>
@@ -58,7 +58,7 @@
 
     <div class="suggested-grid">
       @for (item of filteredSuggested(); track item.id) {
-        <div class="suggested-card">
+        <div class="suggested-card cursor-pointer" (click)="previewFile(item)">
           <div class="suggested-card-header">
             <div class="suggested-file-icon" [style.background-color]="item.iconBg" [style.color]="item.iconColor">
               <mat-icon>{{ item.type === 'md' ? 'article' : 'description' }}</mat-icon>
@@ -106,7 +106,6 @@
   <section class="section-block">
     <div class="section-header">
       <h2 class="section-title">Actividad Reciente</h2>
-      <span class="activity-subtitle">Últimas operaciones realizadas en tus documentos</span>
     </div>
 
     <div class="activity-table-container">
@@ -145,7 +144,7 @@
                 <span class="size-text">{{ act.size }}</span>
               </td>
               <td>
-                <button type="button" class="btn-action-icon" matTooltip="Abrir archivo">
+                <button type="button" class="btn-action-icon" matTooltip="Abrir archivo" (click)="previewActivity(act)">
                   <mat-icon>open_in_new</mat-icon>
                 </button>
               </td>

@@ -100,7 +100,7 @@
           </div>
           <div class="folder-info">
             <span class="folder-name">{{ folder.name }}</span>
-            <span class="folder-meta">{{ folder.itemCount }} elementos • {{ folder.updatedAt }}</span>
+            <span class="folder-meta">{{ folder.itemCount }} {{ folder.itemCount === 1 ? 'elemento' : 'elementos' }} • {{ folder.updatedAt }}</span>
           </div>
 
           <button 
@@ -121,10 +121,18 @@
               <mat-icon class="text-cyan-400">folder_zip</mat-icon>
               <span>Descargar (.zip)</span>
             </button>
-            <button mat-menu-item (click)="openShareDialog('folder', folder.id, folder.name)">
-              <mat-icon class="text-amber-400">share</mat-icon>
-              <span>Compartir</span>
-            </button>
+            @if (folder.isCurrentUser !== false) {
+              <button mat-menu-item (click)="openShareDialog('folder', folder.id, folder.name)">
+                <mat-icon class="text-amber-400">share</mat-icon>
+                <span>Compartir</span>
+              </button>
+            }
+            @if (folder.isCurrentUser !== false || folder.permission === 'edit') {
+              <button mat-menu-item (click)="moveToTrashFolder(folder)">
+                <mat-icon class="text-rose-400">delete</mat-icon>
+                <span class="text-rose-400">Mover a papelera</span>
+              </button>
+            }
           </mat-menu>
         </div>
       } @empty {
@@ -144,6 +152,12 @@
       </div>
 
       <div class="table-actions">
+        @if (selectedFilesCount > 0) {
+          <button type="button" class="btn-table-action !text-rose-400 !border-rose-500/40 hover:!bg-rose-500/10" (click)="moveToTrashSelectedFiles()">
+            <mat-icon>delete</mat-icon>
+            <span>Mover a papelera ({{ selectedFilesCount }})</span>
+          </button>
+        }
         <button type="button" class="btn-table-action">
           <mat-icon>filter_list</mat-icon>
           <span>Filtrar</span>
@@ -211,10 +225,15 @@
                   <span class="text-secondary">{{ file.size }}</span>
                 </td>
                 <td class="col-sharing">
-                  @if (file.sharedStatus === 'shared') {
+                  @if (file.isCurrentUser && file.sharedStatus === 'shared') {
                     <span class="share-badge shared">
                       <mat-icon>people</mat-icon>
                       <span>Compartido con {{ file.sharedCount }}</span>
+                    </span>
+                  } @else if (!file.isCurrentUser) {
+                    <span class="share-badge shared">
+                      <mat-icon>group</mat-icon>
+                      <span>Compartido ({{ getPermissionLabel(file.permission) }})</span>
                     </span>
                   } @else {
                     <span class="share-badge private">
@@ -228,30 +247,14 @@
                     <button 
                       type="button" 
                       class="action-icon-btn" 
-                      matTooltip="Descargar archivo"
-                      (click)="downloadFile(file); $event.stopPropagation()">
-                      @if (downloadingFileId() === file.id) {
-                        <mat-spinner diameter="16" class="inline-block"></mat-spinner>
-                      } @else {
-                        <mat-icon>download</mat-icon>
-                      }
-                    </button>
-
-                    <button 
-                      type="button" 
-                      class="action-icon-btn" 
-                      matTooltip="Previsualizar"
-                      (click)="previewFile(file); $event.stopPropagation()">
-                      <mat-icon>visibility</mat-icon>
-                    </button>
-
-                    <button 
-                      type="button" 
-                      class="action-icon-btn" 
                       matTooltip="Más opciones"
                       [matMenuTriggerFor]="fileMenu" 
                       (click)="$event.stopPropagation()">
-                      <mat-icon>more_vert</mat-icon>
+                      @if (downloadingFileId() === file.id) {
+                        <mat-spinner diameter="16" class="inline-block"></mat-spinner>
+                      } @else {
+                        <mat-icon>more_vert</mat-icon>
+                      }
                     </button>
 
                     <mat-menu #fileMenu="matMenu">
@@ -259,14 +262,32 @@
                         <mat-icon class="text-cyan-400">visibility</mat-icon>
                         <span>Previsualizar</span>
                       </button>
+
                       <button mat-menu-item (click)="downloadFile(file)">
                         <mat-icon class="text-emerald-400">download</mat-icon>
                         <span>Descargar</span>
                       </button>
-                      <button mat-menu-item (click)="openShareDialog('file', file.id, file.name, file.extension)">
-                        <mat-icon class="text-amber-400">share</mat-icon>
-                        <span>Compartir</span>
-                      </button>
+
+                      @if (canEditTags(file)) {
+                        <button mat-menu-item (click)="openTagsDialog(file)">
+                          <mat-icon class="text-indigo-400">label</mat-icon>
+                          <span>Etiquetas</span>
+                        </button>
+                      }
+
+                      @if (file.isCurrentUser) {
+                        <button mat-menu-item (click)="openShareDialog('file', file.id, file.name, file.extension)">
+                          <mat-icon class="text-amber-400">share</mat-icon>
+                          <span>Compartir</span>
+                        </button>
+                      }
+
+                      @if (canDeleteFile(file)) {
+                        <button mat-menu-item (click)="moveToTrashFile(file)">
+                          <mat-icon class="text-rose-400">delete</mat-icon>
+                          <span class="text-rose-400">Mover a papelera</span>
+                        </button>
+                      }
                     </mat-menu>
                   </div>
                 </td>
@@ -324,10 +345,24 @@
                   <mat-icon class="text-emerald-400">download</mat-icon>
                   <span>Descargar</span>
                 </button>
-                <button mat-menu-item (click)="openShareDialog('file', file.id, file.name, file.extension)">
-                  <mat-icon class="text-amber-400">share</mat-icon>
-                  <span>Compartir</span>
-                </button>
+                @if (canEditTags(file)) {
+                  <button mat-menu-item (click)="openTagsDialog(file)">
+                    <mat-icon class="text-indigo-400">label</mat-icon>
+                    <span>Etiquetas</span>
+                  </button>
+                }
+                @if (file.isCurrentUser) {
+                  <button mat-menu-item (click)="openShareDialog('file', file.id, file.name, file.extension)">
+                    <mat-icon class="text-amber-400">share</mat-icon>
+                    <span>Compartir</span>
+                  </button>
+                }
+                @if (canDeleteFile(file)) {
+                  <button mat-menu-item (click)="moveToTrashFile(file)">
+                    <mat-icon class="text-rose-400">delete</mat-icon>
+                    <span class="text-rose-400">Mover a papelera</span>
+                  </button>
+                }
               </mat-menu>
             </div>
             
@@ -354,18 +389,10 @@
               </div>
               <div class="flex items-center gap-1.5">
                 @if (file.sharedStatus === 'shared') {
-                  <span class="share-badge shared small" matTooltip="Compartido">
+                  <span class="share-badge shared small" [matTooltip]="file.isCurrentUser ? 'Compartido con ' + (file.sharedCount || 1) : 'Compartido (' + getPermissionLabel(file.permission) + ')'">
                     <mat-icon>people</mat-icon>
                   </span>
                 }
-                <button 
-                  type="button" 
-                  class="action-icon-btn" 
-                  style="width: 28px; height: 28px;"
-                  (click)="downloadFile(file); $event.stopPropagation()" 
-                  matTooltip="Descargar archivo">
-                  <mat-icon style="font-size: 16px; width: 16px; height: 16px;">download</mat-icon>
-                </button>
               </div>
             </div>
           </div>

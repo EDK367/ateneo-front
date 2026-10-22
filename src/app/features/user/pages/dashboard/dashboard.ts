@@ -1,15 +1,18 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { FileService } from '../../../../core/services/file';
 import { ActivityService } from '../../../../core/services/activity';
 import { ReportService } from '../../../../core/services/report';
 import { SessionService } from '../../../../core/services/config/session';
 import { FileResponse } from '../../../../core/models/file';
 import { ActivityResponse } from '../../../../core/models/activity';
+import { PreviewFileDialog } from '../documents/components/preview-file-dialog/preview-file-dialog';
 
 interface SuggestedFile {
   id: string;
@@ -50,9 +53,11 @@ interface RecentActivity {
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
     MatIconModule,
     MatButtonModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatDialogModule
   ],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
@@ -62,6 +67,7 @@ export class DashboardComponent implements OnInit {
   private activityService = inject(ActivityService);
   private reportService = inject(ReportService);
   private sessionService = inject(SessionService);
+  private dialog = inject(MatDialog);
 
   searchQuery = signal<string>('');
   selectedFilter = signal<string>('all');
@@ -275,6 +281,40 @@ export class DashboardComponent implements OnInit {
       if (filter === 'txt') return f.type === 'txt';
       if (filter === 'shared') return f.statusType === 'shared';
       return true;
+    });
+  }
+
+  previewFile(item: SuggestedFile): void {
+    this.dialog.open(PreviewFileDialog, {
+      width: '760px',
+      maxWidth: '95vw',
+      data: {
+        file: {
+          id: item.id,
+          name: item.name,
+          extension: item.type,
+          size: '—',
+          lastModified: item.openedAgo,
+          ownerName: item.ownerName
+        }
+      }
+    });
+  }
+
+  previewActivity(act: RecentActivity): void {
+    this.dialog.open(PreviewFileDialog, {
+      width: '760px',
+      maxWidth: '95vw',
+      data: {
+        file: {
+          id: act.id,
+          name: act.name,
+          extension: act.type,
+          size: act.size,
+          lastModified: act.time,
+          ownerName: act.user
+        }
+      }
     });
   }
 }

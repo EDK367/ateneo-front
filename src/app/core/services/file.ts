@@ -47,4 +47,8 @@ export class FileService extends ApiService {
   getRecent(limit = 10): Observable<FileResponse[]> {
     return this.get<FileResponse[]>(`/files/recent?limit=${limit}`);
   }
+
+  updateTags(id: string, tags: string[] | string): Observable<FileResponse> {
+    return this.patch<FileResponse>(`/files/${id}/tags`, { tags });
+  }
 }

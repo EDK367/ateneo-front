@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -17,6 +17,7 @@ export interface PreviewFileDialogData {
     size: string;
     lastModified: string;
     ownerName: string;
+    tags?: string[];
   };
 }
 
@@ -39,12 +40,23 @@ export class PreviewFileDialog implements OnInit {
   private dialogRef = inject(MatDialogRef<PreviewFileDialog>);
   private fileService = inject(FileService);
   private sanitizer = inject(DomSanitizer);
+  private cdr = inject(ChangeDetectorRef);
   data: PreviewFileDialogData = inject(MAT_DIALOG_DATA);
 
   loading = true;
   rawContent = '';
   renderedMarkdown: SafeHtml = '';
   activeTab = 0;
+
+  get isMarkdown(): boolean {
+    const ext = (this.data?.file?.extension || '').toLowerCase().trim();
+    const name = (this.data?.file?.name || '').toLowerCase().trim();
+    return ext === 'md' || ext === 'markdown' || ext.endsWith('.md') || name.endsWith('.md');
+  }
+
+  get displayExtension(): string {
+    return this.isMarkdown ? 'md' : 'txt';
+  }
 
   get lineCount(): number {
     if (!this.rawContent) return 0;
@@ -57,22 +69,93 @@ export class PreviewFileDialog implements OnInit {
 
   loadFileContent(): void {
     this.loading = true;
-    this.fileService.getRaw(this.data.file.id).subscribe({
-      next: (res) => {
-        this.rawContent = res?.content || '';
-        this.processContent();
-        this.loading = false;
+    this.rawContent = '';
+    this.renderedMarkdown = '';
+    const fileId = this.data?.file?.id;
+
+    const isValidObjectId = !!fileId && /^[0-9a-fA-F]{24}$/.test(fileId);
+    if (!isValidObjectId) {
+      this.rawContent = this.generateSampleContent();
+      this.processContent();
+      this.loading = false;
+      this.cdr.detectChanges();
+      return;
+    }
+
+    this.fileService.getRaw(fileId).subscribe({
+      next: (res: any) => {
+        let content: string | null = null;
+        if (res && typeof res === 'object') {
+          if (typeof res.content === 'string') {
+            content = res.content;
+          } else if (typeof res.data === 'string') {
+            content = res.data;
+          }
+        } else if (typeof res === 'string') {
+          try {
+            const parsed = JSON.parse(res);
+            content = parsed?.content || res;
+          } catch {
+            content = res;
+          }
+        }
+
+        if (content !== null) {
+          this.rawContent = content;
+          this.processContent();
+          this.loading = false;
+          this.cdr.detectChanges();
+        } else {
+          this.fetchFromDownload(fileId);
+        }
+      },
+      error: () => {
+        this.fetchFromDownload(fileId);
+      }
+    });
+  }
+
+  private fetchFromDownload(fileId: string): void {
+    this.fileService.download(fileId).subscribe({
+      next: (blob) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = typeof reader.result === 'string' ? reader.result : '';
+          try {
+            const parsed = JSON.parse(result);
+            if (parsed && typeof parsed.message === 'string' && (parsed.statusCode === 404 || parsed.error)) {
+              this.rawContent = this.generateSampleContent();
+            } else if (parsed && typeof parsed.content === 'string') {
+              this.rawContent = parsed.content;
+            } else {
+              this.rawContent = result;
+            }
+          } catch {
+            this.rawContent = result;
+          }
+          this.processContent();
+          this.loading = false;
+          this.cdr.detectChanges();
+        };
+        reader.onerror = () => {
+          this.rawContent = this.generateSampleContent();
+          this.processContent();
+          this.loading = false;
+          this.cdr.detectChanges();
+        };
+        reader.readAsText(blob);
       },
       error: () => {
         this.rawContent = this.generateSampleContent();
         this.processContent();
         this.loading = false;
+        this.cdr.detectChanges();
       }
     });
   }
 
   private processContent(): void {
-    if (this.data.file.extension === 'md') {
+    if (this.isMarkdown) {
       this.renderedMarkdown = this.sanitizer.bypassSecurityTrustHtml(
         this.renderMarkdown(this.rawContent)
       );
@@ -80,7 +163,7 @@ export class PreviewFileDialog implements OnInit {
   }
 
   private renderMarkdown(md: string): string {
-    if (!md) return '<p class="text-gray-400 italic">El archivo no tiene contenido.</p>';
+    if (!md) return '<p class="text-[var(--color-text-muted)] italic">El archivo no tiene contenido.</p>';
 
     let html = md
       .replace(/&/g, '&amp;')
@@ -88,22 +171,22 @@ export class PreviewFileDialog implements OnInit {
       .replace(/>/g, '&gt;');
 
     html = html.replace(/```([a-z0-9]*)\n?([\s\S]*?)```/g, (_m, _lang, code) => {
-      return `<pre class="bg-[#0b1220] text-cyan-300 p-4 rounded-xl overflow-x-auto text-xs font-mono my-3 border border-white/10 leading-relaxed">${code.trim()}</pre>`;
+      return `<pre class="bg-[color-mix(in_srgb,var(--color-bg-light)_85%,transparent)] text-[var(--color-primary)] p-4 rounded-xl overflow-x-auto text-xs font-mono my-3 border border-[color-mix(in_srgb,var(--color-text-main)_12%,transparent)] leading-relaxed select-text">${code.trim()}</pre>`;
     });
 
-    html = html.replace(/`([^`]+)`/g, '<code class="bg-cyan-500/10 text-cyan-300 px-1.5 py-0.5 rounded text-xs font-mono font-medium">$1</code>');
+    html = html.replace(/`([^`]+)`/g, '<code class="bg-[color-mix(in_srgb,var(--color-primary)_15%,transparent)] text-[var(--color-primary)] px-1.5 py-0.5 rounded text-xs font-mono font-medium">$1</code>');
 
-    html = html.replace(/^### (.*$)/gim, '<h3 class="text-base font-bold text-white mt-4 mb-2 flex items-center gap-1.5"><span class="text-cyan-400 font-mono">#</span> $1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold text-white mt-5 mb-2.5 flex items-center gap-2 pb-1 border-b border-white/10"><span class="text-cyan-400 font-mono">##</span> $1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 class="text-xl font-black text-cyan-400 mt-5 mb-3 pb-2 border-b border-white/10">$1</h1>');
+    html = html.replace(/^### (.*$)/gim, '<h3 class="text-base font-bold text-[var(--color-text-main)] mt-4 mb-2 flex items-center gap-1.5"><span class="text-[var(--color-primary)] font-mono">#</span> $1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 class="text-lg font-bold text-[var(--color-text-main)] mt-5 mb-2.5 flex items-center gap-2 pb-1 border-b border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)]"><span class="text-[var(--color-primary)] font-mono">##</span> $1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 class="text-xl font-black text-[var(--color-primary)] mt-5 mb-3 pb-2 border-b border-[color-mix(in_srgb,var(--color-text-main)_12%,transparent)]">$1</h1>');
 
-    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
-    html = html.replace(/\*([^*]+)\*/g, '<em class="italic text-gray-300">$1</em>');
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-[var(--color-text-main)]">$1</strong>');
+    html = html.replace(/\*([^*]+)\*/g, '<em class="italic text-[var(--color-text-muted)]">$1</em>');
 
-    html = html.replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-cyan-400 pl-4 py-1 italic text-gray-300 bg-white/5 rounded-r-lg my-2">$1</blockquote>');
+    html = html.replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-[var(--color-primary)] pl-4 py-1 italic text-[var(--color-text-muted)] bg-[color-mix(in_srgb,var(--color-bg-light)_50%,transparent)] rounded-r-lg my-2">$1</blockquote>');
 
-    html = html.replace(/^\s*-\s+(.*$)/gim, '<li class="ml-5 list-disc text-gray-200 my-1 leading-relaxed">$1</li>');
-    html = html.replace(/^\s*\*\s+(.*$)/gim, '<li class="ml-5 list-disc text-gray-200 my-1 leading-relaxed">$1</li>');
+    html = html.replace(/^\s*-\s+(.*$)/gim, '<li class="ml-5 list-disc text-[var(--color-text-main)] my-1 leading-relaxed">$1</li>');
+    html = html.replace(/^\s*\*\s+(.*$)/gim, '<li class="ml-5 list-disc text-[var(--color-text-main)] my-1 leading-relaxed">$1</li>');
 
     html = html.replace(/\n\n/g, '<div class="my-3"></div>');
     html = html.replace(/\n/g, '<br/>');

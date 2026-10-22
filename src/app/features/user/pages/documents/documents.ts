@@ -16,9 +16,12 @@ import { FileService } from '../../../../core/services/file';
 import { SessionService } from '../../../../core/services/config/session';
 import { NotificationService } from '../../../../core/services/config/notification';
 import { FileResponse } from '../../../../core/models/file';
+import { FolderResponse } from '../../../../core/models/folder';
+import { SharePermission } from '../../../../core/models/share';
 import { CreateFileDialog } from './components/create-file-dialog/create-file-dialog';
 import { PreviewFileDialog } from './components/preview-file-dialog/preview-file-dialog';
 import { ShareResourceDialog } from './components/share-resource-dialog/share-resource-dialog';
+import { EditTagsDialog } from './components/edit-tags-dialog/edit-tags-dialog';
 
 export interface FolderItem {
   id: string;
@@ -26,6 +29,9 @@ export interface FolderItem {
   itemCount: number;
   updatedAt: string;
   color: string;
+  isCurrentUser?: boolean;
+  permission?: SharePermission;
+  ownerName?: string;
 }
 
 export interface FileItem {
@@ -40,6 +46,8 @@ export interface FileItem {
   sharedStatus: 'shared' | 'private';
   sharedCount?: number;
   selected?: boolean;
+  permission?: SharePermission;
+  tags?: string[];
 }
 
 @Component({
@@ -122,49 +130,111 @@ export class DocumentsComponent implements OnInit {
             name: content.currentFolder.name,
             itemCount: (content.folders?.length || 0) + (content.files?.length || 0),
             updatedAt: this.formatDate(content.currentFolder.updatedAt || content.currentFolder.createdAt),
-            color: '#06B6D4'
+            color: '#06B6D4',
+            isCurrentUser: true
           });
         } else if (!targetFolderId) {
           this.currentFolder.set(null);
         }
 
-        if (content?.folders && content.folders.length > 0) {
-          const mappedFolders: FolderItem[] = content.folders.map((f, i) => ({
-            id: f._id,
-            name: f.name,
-            itemCount: 0,
-            updatedAt: this.formatDate(f.updatedAt || f.createdAt),
-            color: colors[i % colors.length]
-          }));
-          this.folders.set(mappedFolders);
-        } else if (content?.folders) {
-          this.folders.set([]);
-        } else {
-          this.folders.set(targetFolderId ? [] : this.getDefaultFolders());
-        }
+        const ownFolders: FolderItem[] = (content?.folders || []).map((f: any, i: number) => ({
+          id: f._id,
+          name: f.name,
+          itemCount: f.itemCount ?? f.itemsCount ?? f.totalItems ?? f.filesCount ?? 0,
+          updatedAt: this.formatDate(f.updatedAt || f.createdAt),
+          color: colors[i % colors.length],
+          isCurrentUser: true
+        }));
 
-        if (content?.files && content.files.length > 0) {
-          this.shareService.findSharedByMe().subscribe({
-            next: (shares) => {
-              const shareMap = new Map<string, number>();
-              if (shares && Array.isArray(shares)) {
-                for (const s of shares) {
-                  shareMap.set(s.resourceId, (shareMap.get(s.resourceId) || 0) + 1);
-                }
-              }
-              const mappedFiles = this.mapFiles(content.files, user, shareMap);
-              this.files.set(mappedFiles);
+        ownFolders.forEach(folder => {
+          this.folderService.getContent(folder.id).subscribe({
+            next: (subContent) => {
+              const total = (subContent?.folders?.length || 0) + (subContent?.files?.length || 0);
+              this.folders.update(currentList =>
+                currentList.map(item => item.id === folder.id ? { ...item, itemCount: total } : item)
+              );
             },
-            error: () => {
-              const mappedFiles = this.mapFiles(content.files, user, new Map());
-              this.files.set(mappedFiles);
-            }
+            error: () => {}
           });
-        } else if (content?.files) {
-          this.files.set([]);
-        } else {
-          this.files.set(targetFolderId ? [] : this.getDefaultFiles());
-        }
+        });
+
+        this.shareService.findSharedByMe().subscribe({
+          next: (sharedByMe) => {
+            const shareMap = new Map<string, number>();
+            if (sharedByMe && Array.isArray(sharedByMe)) {
+              for (const s of sharedByMe) {
+                shareMap.set(s.resourceId, (shareMap.get(s.resourceId) || 0) + 1);
+              }
+            }
+            const mappedOwnFiles = this.mapFiles(content?.files || [], user, shareMap);
+
+            if (!targetFolderId) {
+              this.shareService.findSharedWithMe().subscribe({
+                next: (sharedWithMe) => {
+                  const sharedFiles: FileItem[] = [];
+                  const sharedFolders: FolderItem[] = [];
+
+                  if (sharedWithMe && Array.isArray(sharedWithMe)) {
+                    for (const s of sharedWithMe) {
+                      if (s.resourceType === 'file' && s.resource) {
+                        const res = s.resource as FileResponse;
+                        const ownerObj = typeof s.ownerId === 'object' ? s.ownerId : null;
+                        const ownerName = ownerObj?.username || 'Usuario';
+                        const ext = (res.type || (res.name?.endsWith('.md') ? 'md' : 'txt')) as 'md' | 'txt';
+                        sharedFiles.push({
+                          id: res._id,
+                          name: res.name,
+                          extension: ext,
+                          ownerName: ownerName,
+                          ownerAvatar: this.getAvatarInitials(ownerName),
+                          isCurrentUser: false,
+                          lastModified: this.formatDate(res.updatedAt || res.createdAt),
+                          size: this.formatBytes(res.size),
+                          sharedStatus: 'shared',
+                          sharedCount: 1,
+                          selected: false,
+                          permission: s.permission,
+                          tags: res.tags || []
+                        });
+                      } else if (s.resourceType === 'folder' && s.resource) {
+                        const res = s.resource as FolderResponse;
+                        const ownerObj = typeof s.ownerId === 'object' ? s.ownerId : null;
+                        const ownerName = ownerObj?.username || 'Usuario';
+                        sharedFolders.push({
+                          id: res._id,
+                          name: res.name,
+                          itemCount: 0,
+                          updatedAt: this.formatDate(res.updatedAt || res.createdAt),
+                          color: '#A855F7',
+                          isCurrentUser: false,
+                          permission: s.permission,
+                          ownerName: ownerName
+                        });
+                      }
+                    }
+                  }
+
+                  const allFolders = [...ownFolders, ...sharedFolders];
+                  const allFiles = [...mappedOwnFiles, ...sharedFiles];
+                  this.folders.set(allFolders.length > 0 ? allFolders : this.getDefaultFolders());
+                  this.files.set(allFiles.length > 0 ? allFiles : this.getDefaultFiles());
+                },
+                error: () => {
+                  this.folders.set(ownFolders.length > 0 ? ownFolders : this.getDefaultFolders());
+                  this.files.set(mappedOwnFiles.length > 0 ? mappedOwnFiles : this.getDefaultFiles());
+                }
+              });
+            } else {
+              this.folders.set(ownFolders);
+              this.files.set(mappedOwnFiles);
+            }
+          },
+          error: () => {
+            const mappedOwnFiles = this.mapFiles(content?.files || [], user, new Map());
+            this.folders.set(ownFolders.length > 0 ? ownFolders : (targetFolderId ? [] : this.getDefaultFolders()));
+            this.files.set(mappedOwnFiles.length > 0 ? mappedOwnFiles : (targetFolderId ? [] : this.getDefaultFiles()));
+          }
+        });
       },
       error: () => {
         if (!targetFolderId) {
@@ -289,10 +359,11 @@ export class DocumentsComponent implements OnInit {
       const isCurrent = !user || file.ownerId === user.userId;
       const sharesCount = shareMap.get(file._id) || 0;
       const ownerName = isCurrent ? (user?.username || 'Tú') : 'Usuario';
+      const ext = (file.type || (file.name?.endsWith('.md') ? 'md' : 'txt')) as 'md' | 'txt';
       return {
         id: file._id,
         name: file.name,
-        extension: file.type,
+        extension: ext,
         ownerName: isCurrent ? 'Tú' : ownerName,
         ownerAvatar: this.getAvatarInitials(ownerName),
         isCurrentUser: isCurrent,
@@ -300,7 +371,8 @@ export class DocumentsComponent implements OnInit {
         size: this.formatBytes(file.size),
         sharedStatus: sharesCount > 0 ? 'shared' : 'private',
         sharedCount: sharesCount > 0 ? sharesCount : undefined,
-        selected: false
+        selected: false,
+        tags: file.tags || []
       };
     });
   }
@@ -366,8 +438,43 @@ export class DocumentsComponent implements OnInit {
 
       if (filter === 'md') return f.extension === 'md';
       if (filter === 'txt') return f.extension === 'txt';
-      if (filter === 'shared') return f.sharedStatus === 'shared';
+      if (filter === 'shared') return f.sharedStatus === 'shared' || !f.isCurrentUser;
       return true;
+    });
+  }
+
+  canEditTags(file: FileItem): boolean {
+    if (file.isCurrentUser) return true;
+    return file.permission === 'comment' || file.permission === 'edit';
+  }
+
+  canDeleteFile(file: FileItem): boolean {
+    if (file.isCurrentUser) return true;
+    return file.permission === 'edit';
+  }
+
+  getPermissionLabel(perm?: SharePermission): string {
+    switch (perm) {
+      case 'edit': return 'Edición';
+      case 'comment': return 'Comentario';
+      case 'read':
+      default: return 'Solo lectura';
+    }
+  }
+
+  openTagsDialog(file: FileItem): void {
+    const dialogRef = this.dialog.open(EditTagsDialog, {
+      width: '500px',
+      maxWidth: '95vw',
+      data: { file }
+    });
+
+    dialogRef.afterClosed().subscribe((newTags: string[] | undefined) => {
+      if (newTags) {
+        this.files.update(list =>
+          list.map(f => f.id === file.id ? { ...f, tags: newTags } : f)
+        );
+      }
     });
   }
 
@@ -382,7 +489,9 @@ export class DocumentsComponent implements OnInit {
       if (res?.action === 'download') {
         this.downloadFile(res.file);
       } else if (res?.action === 'share') {
-        this.openShareDialog('file', res.file.id, res.file.name, res.file.extension);
+        if (file.isCurrentUser) {
+          this.openShareDialog('file', res.file.id, res.file.name, res.file.extension);
+        }
       }
     });
   }
@@ -497,6 +606,80 @@ export class DocumentsComponent implements OnInit {
         `# ${folderName}\n\nDocumento consolidado de la carpeta empaquetada.\n`
       );
     }
+  }
+
+  moveToTrashFile(file: FileItem): void {
+    if (!confirm(`¿Estás seguro de enviar "${file.name}" a la papelera?`)) {
+      return;
+    }
+    this.fileService.deleteFile(file.id).subscribe({
+      next: () => {
+        this.notificationService.showSuccess(`Archivo "${file.name}" movido a la papelera`, 'Papelera');
+        this.loadContent(this.currentFolderId());
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Error al mover archivo a la papelera';
+        this.notificationService.showError(msg, 'Error');
+      }
+    });
+  }
+
+  moveToTrashFolder(folder: FolderItem): void {
+    if (!confirm(`¿Estás seguro de enviar la carpeta "${folder.name}" a la papelera?`)) {
+      return;
+    }
+    this.folderService.deleteFolder(folder.id).subscribe({
+      next: () => {
+        this.notificationService.showSuccess(`Carpeta "${folder.name}" movida a la papelera`, 'Papelera');
+        this.loadContent(this.currentFolderId());
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Error al mover carpeta a la papelera';
+        this.notificationService.showError(msg, 'Error');
+      }
+    });
+  }
+
+  get selectedFilesCount(): number {
+    return this.files().filter(f => f.selected).length;
+  }
+
+  moveToTrashSelectedFiles(): void {
+    const selected = this.files().filter(f => f.selected);
+    if (selected.length === 0) return;
+    if (!confirm(`¿Estás seguro de enviar ${selected.length} archivos seleccionados a la papelera?`)) {
+      return;
+    }
+
+    let deleted = 0;
+    let errors = 0;
+    let completed = 0;
+
+    const finalize = () => {
+      if (deleted > 0) {
+        this.notificationService.showSuccess(`${deleted} archivo(s) movido(s) a la papelera`, 'Papelera');
+      }
+      if (errors > 0) {
+        this.notificationService.showError(`No se pudieron mover ${errors} archivo(s)`, 'Error');
+      }
+      this.selectAll.set(false);
+      this.loadContent(this.currentFolderId());
+    };
+
+    selected.forEach(file => {
+      this.fileService.deleteFile(file.id).subscribe({
+        next: () => {
+          deleted++;
+          completed++;
+          if (completed === selected.length) finalize();
+        },
+        error: () => {
+          errors++;
+          completed++;
+          if (completed === selected.length) finalize();
+        }
+      });
+    });
   }
 
   openShareDialog(resourceType: 'file' | 'folder', resourceId: string, resourceName: string, extension?: string): void {
