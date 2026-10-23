@@ -27,6 +27,12 @@
           <mat-icon>arrow_upward</mat-icon>
           <span>Subir nivel</span>
         </button>
+        @if (currentFolder() && (currentFolder()?.isCurrentUser !== false || currentFolder()?.permission === 'edit')) {
+          <button type="button" class="btn-navigate-up" (click)="renameCurrentFolder()" matTooltip="Renombrar esta carpeta">
+            <mat-icon>edit</mat-icon>
+            <span>Renombrar</span>
+          </button>
+        }
       }
     </div>
 
@@ -121,6 +127,12 @@
               <mat-icon class="text-cyan-400">folder_zip</mat-icon>
               <span>Descargar (.zip)</span>
             </button>
+            @if (folder.isCurrentUser !== false || folder.permission === 'edit') {
+              <button mat-menu-item (click)="renameFolder(folder)">
+                <mat-icon class="text-indigo-400">edit</mat-icon>
+                <span>Renombrar</span>
+              </button>
+            }
             @if (folder.isCurrentUser !== false) {
               <button mat-menu-item (click)="openShareDialog('folder', folder.id, folder.name)">
                 <mat-icon class="text-amber-400">share</mat-icon>
@@ -268,6 +280,13 @@
                         <span>Descargar</span>
                       </button>
 
+                      @if (file.isCurrentUser || file.permission === 'edit') {
+                        <button mat-menu-item (click)="renameFile(file)">
+                          <mat-icon class="text-indigo-400">edit</mat-icon>
+                          <span>Renombrar</span>
+                        </button>
+                      }
+
                       @if (canEditTags(file)) {
                         <button mat-menu-item (click)="openTagsDialog(file)">
                           <mat-icon class="text-indigo-400">label</mat-icon>
@@ -345,6 +364,12 @@
                   <mat-icon class="text-emerald-400">download</mat-icon>
                   <span>Descargar</span>
                 </button>
+                @if (file.isCurrentUser || file.permission === 'edit') {
+                  <button mat-menu-item (click)="renameFile(file)">
+                    <mat-icon class="text-indigo-400">edit</mat-icon>
+                    <span>Renombrar</span>
+                  </button>
+                }
                 @if (canEditTags(file)) {
                   <button mat-menu-item (click)="openTagsDialog(file)">
                     <mat-icon class="text-indigo-400">label</mat-icon>

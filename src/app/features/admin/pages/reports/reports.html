@@ -325,6 +325,393 @@
           </div>
         </div>
       </mat-tab>
+      <mat-tab>
+        <ng-template mat-tab-label>
+          <div class="flex items-center gap-2 py-2">
+            <mat-icon class="!text-lg">analytics</mat-icon>
+            <span class="font-semibold text-sm">Reportes Especiales (Rúbrica)</span>
+          </div>
+        </ng-template>
+
+        <div class="p-6 flex flex-col gap-6">
+          <div class="flex flex-col gap-2">
+            <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider">Consultas Analíticas y Agregaciones</span>
+            <p class="text-xs text-[var(--color-text-muted)]">Seleccione uno de los 10 reportes requeridos para ejecutar la agregación sobre MongoDB:</p>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            @for (rep of rubricReports; track rep.id) {
+              <button
+                type="button"
+                (click)="selectRubricReport(rep.id)"
+                class="flex flex-col items-center justify-center p-3 rounded-xl border text-center transition-all gap-1.5"
+                [class.bg-cyan-500]="selectedRubricReport() === rep.id"
+                [class.text-slate-950]="selectedRubricReport() === rep.id"
+                [class.border-cyan-500]="selectedRubricReport() === rep.id"
+                [class.shadow-lg]="selectedRubricReport() === rep.id"
+                [class.bg-white-5]="selectedRubricReport() !== rep.id"
+                [class.text-slate-300]="selectedRubricReport() !== rep.id"
+                [class.border-white-10]="selectedRubricReport() !== rep.id"
+              >
+                <mat-icon class="!text-lg">{{ rep.icon }}</mat-icon>
+                <span class="text-xs font-semibold leading-tight">{{ rep.label }}</span>
+              </button>
+            }
+          </div>
+
+          @if (selectedRubricReport() === 'filesByDateRange') {
+            <div class="p-4 rounded-xl bg-white/[0.02] border border-white/10 flex flex-wrap items-center gap-4">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-[var(--color-text-muted)]">Fecha Inicial:</span>
+                <input
+                  type="date"
+                  [ngModel]="filterStartDate()"
+                  (ngModelChange)="filterStartDate.set($event)"
+                  class="bg-slate-900 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                />
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <span class="text-[var(--color-text-muted)]">Fecha Final:</span>
+                <input
+                  type="date"
+                  [ngModel]="filterEndDate()"
+                  (ngModelChange)="filterEndDate.set($event)"
+                  class="bg-slate-900 border border-white/15 rounded-lg px-2.5 py-1.5 text-xs text-white"
+                />
+              </div>
+              <button
+                mat-flat-button
+                color="primary"
+                (click)="loadRubricReport('filesByDateRange')"
+                class="!rounded-lg !text-xs !h-8"
+              >
+                Filtrar por Rango
+              </button>
+            </div>
+          }
+
+          @if (selectedRubricReport() === 'sharedByUser' || selectedRubricReport() === 'receivedByUser') {
+            <div class="p-4 rounded-xl bg-white/[0.02] border border-white/10 flex flex-wrap items-center gap-4">
+              <span class="text-xs text-[var(--color-text-muted)]">Seleccionar Usuario:</span>
+              <select
+                [ngModel]="filterSelectedUserId()"
+                (ngModelChange)="filterSelectedUserId.set($event); loadRubricReport()"
+                class="bg-slate-900 border border-white/15 rounded-lg px-3 py-1.5 text-xs text-white max-w-xs"
+              >
+                @for (u of users(); track u._id) {
+                  <option [value]="u._id">{{ u.username }} ({{ u.email }})</option>
+                }
+              </select>
+              <button
+                mat-stroked-button
+                (click)="loadRubricReport()"
+                class="!rounded-lg !text-xs !h-8"
+              >
+                Actualizar
+              </button>
+            </div>
+          }
+
+          <div class="rounded-2xl bg-white/[0.02] border border-white/10 overflow-hidden min-h-[200px]">
+            @if (rubricLoading()) {
+              <div class="flex flex-col items-center justify-center p-12 text-center text-[var(--color-text-muted)] gap-3">
+                <mat-spinner diameter="36"></mat-spinner>
+                <p class="text-xs">Consultando base de datos...</p>
+              </div>
+            } @else {
+              @if (selectedRubricReport() === 'filesByType') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">Extensión / Tipo</th>
+                        <th class="py-3 px-4">Cantidad de Archivos</th>
+                        <th class="py-3 px-4">Almacenamiento Total</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (item of filesByTypeData(); track item.type) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-mono font-bold text-cyan-400 uppercase">.{{ item.type }}</td>
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ item.count }} archivos</td>
+                          <td class="py-3.5 px-4 font-mono text-xs text-purple-400">{{ formatBytes(item.totalBytes) }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="3" class="p-8 text-center text-xs text-[var(--color-text-muted)]">No se encontraron registros</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'filesByDateRange') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">Archivo</th>
+                        <th class="py-3 px-4">Tipo</th>
+                        <th class="py-3 px-4">Tamaño</th>
+                        <th class="py-3 px-4">Propietario</th>
+                        <th class="py-3 px-4">Carpeta</th>
+                        <th class="py-3 px-4 text-right">Fecha Creación</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (file of filesByDateRangeData(); track file._id) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ file.name }}</td>
+                          <td class="py-3.5 px-4 font-mono uppercase text-xs text-cyan-400">{{ file.type }}</td>
+                          <td class="py-3.5 px-4 font-mono text-xs text-[var(--color-text-muted)]">{{ formatBytes(file.size) }}</td>
+                          <td class="py-3.5 px-4 text-xs">{{ file.ownerName }}</td>
+                          <td class="py-3.5 px-4 text-xs text-[var(--color-text-muted)]">{{ file.folderName }}</td>
+                          <td class="py-3.5 px-4 text-right text-xs text-[var(--color-text-muted)]">{{ formatDate(file.createdAt) }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="6" class="p-8 text-center text-xs text-[var(--color-text-muted)]">No hay archivos en el rango seleccionado</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'filesMostOperations') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">Archivo</th>
+                        <th class="py-3 px-4">Tipo</th>
+                        <th class="py-3 px-4">Total de Operaciones</th>
+                        <th class="py-3 px-4">Última Acción</th>
+                        <th class="py-3 px-4 text-right">Fecha Última Actividad</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (item of mostActiveFilesData(); track item._id) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ item.fileName }}</td>
+                          <td class="py-3.5 px-4 font-mono uppercase text-xs text-cyan-400">{{ item.fileType || 'file' }}</td>
+                          <td class="py-3.5 px-4 font-mono font-bold text-amber-400">{{ item.operationsCount }} operaciones</td>
+                          <td class="py-3.5 px-4">
+                            <span class="px-2 py-0.5 rounded text-xs" [ngClass]="getActionBadgeClass(item.lastAction)">{{ getActionLabel(item.lastAction) }}</span>
+                          </td>
+                          <td class="py-3.5 px-4 text-right text-xs text-[var(--color-text-muted)]">{{ formatDate(item.lastActivityDate) }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="5" class="p-8 text-center text-xs text-[var(--color-text-muted)]">Sin operaciones registradas</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'topUsersFiles') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">#</th>
+                        <th class="py-3 px-4">Usuario</th>
+                        <th class="py-3 px-4">Correo</th>
+                        <th class="py-3 px-4">Total de Archivos</th>
+                        <th class="py-3 px-4 text-right">Espacio Ocupado</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (u of topUsersFilesData(); track u._id; let idx = $index) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-mono text-xs text-[var(--color-text-muted)]">{{ idx + 1 }}</td>
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ u.username }}</td>
+                          <td class="py-3.5 px-4 text-xs text-[var(--color-text-muted)]">{{ u.email }}</td>
+                          <td class="py-3.5 px-4 font-mono font-bold text-cyan-400">{{ u.totalFiles }} archivos</td>
+                          <td class="py-3.5 px-4 text-right font-mono text-xs text-purple-400">{{ formatBytes(u.totalBytes) }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="5" class="p-8 text-center text-xs text-[var(--color-text-muted)]">Sin registros de usuarios</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'topUsersShares') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">#</th>
+                        <th class="py-3 px-4">Usuario</th>
+                        <th class="py-3 px-4">Correo</th>
+                        <th class="py-3 px-4 text-right">Recursos Compartidos</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (u of topUsersSharesData(); track u._id; let idx = $index) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-mono text-xs text-[var(--color-text-muted)]">{{ idx + 1 }}</td>
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ u.username }}</td>
+                          <td class="py-3.5 px-4 text-xs text-[var(--color-text-muted)]">{{ u.email }}</td>
+                          <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-400">{{ u.sharesCount }} recursos</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="4" class="p-8 text-center text-xs text-[var(--color-text-muted)]">Sin recursos compartidos</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'sharedByUser') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">Tipo Recurso</th>
+                        <th class="py-3 px-4">Nombre del Recurso</th>
+                        <th class="py-3 px-4">Compartido Con</th>
+                        <th class="py-3 px-4">Permiso</th>
+                        <th class="py-3 px-4 text-right">Fecha de Compartición</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (item of sharedByUserData(); track item._id) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-mono uppercase text-xs text-cyan-400">{{ item.resourceType }}</td>
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ item.resourceName }}</td>
+                          <td class="py-3.5 px-4 text-xs">{{ item.sharedWithUsername }} ({{ item.sharedWithEmail }})</td>
+                          <td class="py-3.5 px-4 font-mono text-xs text-purple-400 uppercase font-bold">{{ item.permission }}</td>
+                          <td class="py-3.5 px-4 text-right text-xs text-[var(--color-text-muted)]">{{ formatDate(item.createdAt) }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="5" class="p-8 text-center text-xs text-[var(--color-text-muted)]">Este usuario no ha compartido recursos</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'receivedByUser') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">Tipo Recurso</th>
+                        <th class="py-3 px-4">Nombre del Recurso</th>
+                        <th class="py-3 px-4">Propietario Origen</th>
+                        <th class="py-3 px-4">Permiso</th>
+                        <th class="py-3 px-4 text-right">Fecha de Compartición</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (item of sharedWithUserData(); track item._id) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-mono uppercase text-xs text-cyan-400">{{ item.resourceType }}</td>
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ item.resourceName }}</td>
+                          <td class="py-3.5 px-4 text-xs">{{ item.ownerUsername }} ({{ item.ownerEmail }})</td>
+                          <td class="py-3.5 px-4 font-mono text-xs text-purple-400 uppercase font-bold">{{ item.permission }}</td>
+                          <td class="py-3.5 px-4 text-right text-xs text-[var(--color-text-muted)]">{{ formatDate(item.createdAt) }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="5" class="p-8 text-center text-xs text-[var(--color-text-muted)]">Este usuario no ha recibido recursos compartidos</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'neverShared') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">Archivo</th>
+                        <th class="py-3 px-4">Tipo</th>
+                        <th class="py-3 px-4">Tamaño</th>
+                        <th class="py-3 px-4">Propietario</th>
+                        <th class="py-3 px-4">Carpeta</th>
+                        <th class="py-3 px-4 text-right">Fecha Creación</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (file of neverSharedFilesData(); track file._id) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ file.name }}</td>
+                          <td class="py-3.5 px-4 font-mono uppercase text-xs text-cyan-400">{{ file.type }}</td>
+                          <td class="py-3.5 px-4 font-mono text-xs text-[var(--color-text-muted)]">{{ formatBytes(file.size) }}</td>
+                          <td class="py-3.5 px-4 text-xs">{{ file.ownerName }}</td>
+                          <td class="py-3.5 px-4 text-xs text-[var(--color-text-muted)]">{{ file.folderName }}</td>
+                          <td class="py-3.5 px-4 text-right text-xs text-[var(--color-text-muted)]">{{ formatDate(file.createdAt) }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="6" class="p-8 text-center text-xs text-[var(--color-text-muted)]">Todos los archivos han sido compartidos al menos una vez</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'foldersMostFiles') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">#</th>
+                        <th class="py-3 px-4">Nombre de Carpeta</th>
+                        <th class="py-3 px-4">Propietario</th>
+                        <th class="py-3 px-4">Cantidad de Archivos</th>
+                        <th class="py-3 px-4 text-right">Espacio Total</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (folder of foldersMostFilesData(); track folder._id; let idx = $index) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-mono text-xs text-[var(--color-text-muted)]">{{ idx + 1 }}</td>
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ folder.folderName }}</td>
+                          <td class="py-3.5 px-4 text-xs text-[var(--color-text-muted)]">{{ folder.ownerName }}</td>
+                          <td class="py-3.5 px-4 font-mono font-bold text-cyan-400">{{ folder.filesCount }} archivos</td>
+                          <td class="py-3.5 px-4 text-right font-mono text-xs text-purple-400">{{ formatBytes(folder.totalBytes) }}</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="5" class="p-8 text-center text-xs text-[var(--color-text-muted)]">Sin carpetas con archivos</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+
+              @if (selectedRubricReport() === 'filesMostSharedUsers') {
+                <div class="w-full overflow-x-auto">
+                  <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                      <tr class="border-b border-white/10 bg-white/[0.01] text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider">
+                        <th class="py-3 px-4">#</th>
+                        <th class="py-3 px-4">Archivo</th>
+                        <th class="py-3 px-4">Tipo</th>
+                        <th class="py-3 px-4">Propietario</th>
+                        <th class="py-3 px-4 text-right">Usuarios con Acceso</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                      @for (file of filesMostSharedUsersData(); track file._id; let idx = $index) {
+                        <tr class="hover:bg-white/[0.02] transition-colors">
+                          <td class="py-3.5 px-4 font-mono text-xs text-[var(--color-text-muted)]">{{ idx + 1 }}</td>
+                          <td class="py-3.5 px-4 font-semibold text-[var(--color-text-main)]">{{ file.fileName }}</td>
+                          <td class="py-3.5 px-4 font-mono uppercase text-xs text-cyan-400">{{ file.fileType }}</td>
+                          <td class="py-3.5 px-4 text-xs text-[var(--color-text-muted)]">{{ file.ownerName }}</td>
+                          <td class="py-3.5 px-4 text-right font-mono font-bold text-emerald-400">{{ file.sharedWithCount }} usuarios</td>
+                        </tr>
+                      } @empty {
+                        <tr><td colspan="5" class="p-8 text-center text-xs text-[var(--color-text-muted)]">Sin archivos compartidos con usuarios</td></tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      </mat-tab>
     </mat-tab-group>
   </mat-card>
 </div>

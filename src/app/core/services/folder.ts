@@ -18,8 +18,9 @@ export class FolderService extends ApiService {
     return this.post<FolderResponse>('/folders', folder);
   }
 
-  getContent(folderId?: string): Observable<FolderContentResponse> {
-    const params = folderId ? new HttpParams().set('folderId', folderId) : undefined;
+  getContent(folderId?: string | null): Observable<FolderContentResponse> {
+    const cleanId = folderId && folderId !== 'null' && folderId !== 'undefined' && folderId.trim() !== '' ? folderId.trim() : null;
+    const params = cleanId ? new HttpParams().set('folderId', cleanId) : undefined;
     return this.get<FolderContentResponse>('/folders/content', params);
   }
 

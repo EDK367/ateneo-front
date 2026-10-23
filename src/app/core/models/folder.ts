@@ -23,6 +23,7 @@ export interface FolderResponse {
   trashRootId: string | null;
   createdAt: string;
   updatedAt: string;
+  itemCount?: number;
 }
 
 export interface FolderContentResponse {

@@ -1,0 +1,59 @@
+<div class="p-6 flex flex-col gap-4 w-full bg-[var(--color-bg-soft)] text-[var(--color-text-main)]">
+  <div class="flex items-center justify-between pb-3 border-b border-[color-mix(in_srgb,var(--color-text-main)_12%,transparent)]">
+    <div class="flex items-center gap-3">
+      <div 
+        class="w-10 h-10 rounded-xl flex items-center justify-center"
+        [ngClass]="data.type === 'folder' ? 'bg-cyan-500/15 text-cyan-400' : 'bg-indigo-500/15 text-indigo-400'">
+        <mat-icon>{{ data.type === 'folder' ? 'folder' : 'edit' }}</mat-icon>
+      </div>
+      <div>
+        <h2 class="text-base font-bold m-0 text-[var(--color-text-main)]">
+          {{ data.type === 'folder' ? 'Renombrar Carpeta' : 'Renombrar Archivo' }}
+        </h2>
+        <p class="text-xs m-0 text-[var(--color-text-muted)] truncate max-w-sm">{{ data.currentName }}</p>
+      </div>
+    </div>
+    <button type="button" mat-icon-button (click)="close()" class="text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="flex flex-col gap-3 py-2">
+    <mat-form-field appearance="outline" floatLabel="always" class="w-full" subscriptSizing="dynamic">
+      <mat-label>Nuevo nombre</mat-label>
+      <input 
+        matInput 
+        [(ngModel)]="name" 
+        (keydown.enter)="save()"
+        placeholder="Ingresa el nuevo nombre" 
+        autocomplete="off" />
+      <mat-icon matPrefix class="mr-2" [ngClass]="data.type === 'folder' ? 'text-cyan-400' : 'text-indigo-400'">
+        {{ data.type === 'folder' ? 'folder' : 'description' }}
+      </mat-icon>
+      @if (data.type === 'file' && data.extension) {
+        <span matSuffix class="text-xs font-bold px-2 py-1 rounded bg-[color-mix(in_srgb,var(--color-bg-light)_80%,transparent)] text-indigo-400">
+          .{{ data.extension }}
+        </span>
+      }
+    </mat-form-field>
+  </div>
+
+  <div class="flex items-center justify-end gap-2 pt-3 border-t border-[color-mix(in_srgb,var(--color-text-main)_10%,transparent)]">
+    <button type="button" mat-button (click)="close()" class="text-[var(--color-text-muted)]">
+      Cancelar
+    </button>
+    <button 
+      type="button" 
+      mat-flat-button 
+      color="primary" 
+      [disabled]="isSaveDisabled()"
+      (click)="save()">
+      @if (saving) {
+        <mat-spinner diameter="18" class="mr-2"></mat-spinner>
+      } @else {
+        <mat-icon>check</mat-icon>
+      }
+      <span>Renombrar</span>
+    </button>
+  </div>
+</div>

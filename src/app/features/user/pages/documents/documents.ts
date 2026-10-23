@@ -22,6 +22,7 @@ import { CreateFileDialog } from './components/create-file-dialog/create-file-di
 import { PreviewFileDialog } from './components/preview-file-dialog/preview-file-dialog';
 import { ShareResourceDialog } from './components/share-resource-dialog/share-resource-dialog';
 import { EditTagsDialog } from './components/edit-tags-dialog/edit-tags-dialog';
+import { RenameDialog } from './components/rename-dialog/rename-dialog';
 
 export interface FolderItem {
   id: string;
@@ -125,10 +126,13 @@ export class DocumentsComponent implements OnInit {
     this.folderService.getContent(targetFolderId).subscribe({
       next: (content) => {
         if (content?.currentFolder) {
+          const currentTotal =
+            (content.currentFolder as any).itemCount ??
+            ((content.folders?.length || 0) + (content.files?.length || 0));
           this.currentFolder.set({
             id: content.currentFolder._id,
             name: content.currentFolder.name,
-            itemCount: (content.folders?.length || 0) + (content.files?.length || 0),
+            itemCount: currentTotal,
             updatedAt: this.formatDate(content.currentFolder.updatedAt || content.currentFolder.createdAt),
             color: '#06B6D4',
             isCurrentUser: true
@@ -140,23 +144,11 @@ export class DocumentsComponent implements OnInit {
         const ownFolders: FolderItem[] = (content?.folders || []).map((f: any, i: number) => ({
           id: f._id,
           name: f.name,
-          itemCount: f.itemCount ?? f.itemsCount ?? f.totalItems ?? f.filesCount ?? 0,
+          itemCount: f.itemCount ?? ((f.folders?.length || 0) + (f.files?.length || 0)),
           updatedAt: this.formatDate(f.updatedAt || f.createdAt),
           color: colors[i % colors.length],
           isCurrentUser: true
         }));
-
-        ownFolders.forEach(folder => {
-          this.folderService.getContent(folder.id).subscribe({
-            next: (subContent) => {
-              const total = (subContent?.folders?.length || 0) + (subContent?.files?.length || 0);
-              this.folders.update(currentList =>
-                currentList.map(item => item.id === folder.id ? { ...item, itemCount: total } : item)
-              );
-            },
-            error: () => {}
-          });
-        });
 
         this.shareService.findSharedByMe().subscribe({
           next: (sharedByMe) => {
@@ -197,13 +189,13 @@ export class DocumentsComponent implements OnInit {
                           tags: res.tags || []
                         });
                       } else if (s.resourceType === 'folder' && s.resource) {
-                        const res = s.resource as FolderResponse;
+                        const res = s.resource as any;
                         const ownerObj = typeof s.ownerId === 'object' ? s.ownerId : null;
                         const ownerName = ownerObj?.username || 'Usuario';
                         sharedFolders.push({
                           id: res._id,
                           name: res.name,
-                          itemCount: 0,
+                          itemCount: res.itemCount ?? 0,
                           updatedAt: this.formatDate(res.updatedAt || res.createdAt),
                           color: '#A855F7',
                           isCurrentUser: false,
@@ -216,12 +208,12 @@ export class DocumentsComponent implements OnInit {
 
                   const allFolders = [...ownFolders, ...sharedFolders];
                   const allFiles = [...mappedOwnFiles, ...sharedFiles];
-                  this.folders.set(allFolders.length > 0 ? allFolders : this.getDefaultFolders());
-                  this.files.set(allFiles.length > 0 ? allFiles : this.getDefaultFiles());
+                  this.folders.set(allFolders);
+                  this.files.set(allFiles);
                 },
                 error: () => {
-                  this.folders.set(ownFolders.length > 0 ? ownFolders : this.getDefaultFolders());
-                  this.files.set(mappedOwnFiles.length > 0 ? mappedOwnFiles : this.getDefaultFiles());
+                  this.folders.set(ownFolders);
+                  this.files.set(mappedOwnFiles);
                 }
               });
             } else {
@@ -231,102 +223,24 @@ export class DocumentsComponent implements OnInit {
           },
           error: () => {
             const mappedOwnFiles = this.mapFiles(content?.files || [], user, new Map());
-            this.folders.set(ownFolders.length > 0 ? ownFolders : (targetFolderId ? [] : this.getDefaultFolders()));
-            this.files.set(mappedOwnFiles.length > 0 ? mappedOwnFiles : (targetFolderId ? [] : this.getDefaultFiles()));
+            this.folders.set(ownFolders);
+            this.files.set(mappedOwnFiles);
           }
         });
       },
       error: () => {
-        if (!targetFolderId) {
-          this.folders.set(this.getDefaultFolders());
-          this.files.set(this.getDefaultFiles());
-        } else {
-          this.folders.set([]);
-          this.files.set([]);
-        }
+        this.folders.set([]);
+        this.files.set([]);
       }
     });
   }
 
   private getDefaultFolders(): FolderItem[] {
-    return [
-      {
-        id: 'f-1',
-        name: 'Apuntes de Inteligencia Artificial',
-        itemCount: 3,
-        updatedAt: '16 oct 2026',
-        color: '#06B6D4'
-      },
-      {
-        id: 'f-2',
-        name: 'Proyectos y Entregas',
-        itemCount: 2,
-        updatedAt: '12 oct 2026',
-        color: '#10B981'
-      },
-      {
-        id: 'f-3',
-        name: 'Documentación de Sistemas',
-        itemCount: 4,
-        updatedAt: '8 oct 2026',
-        color: '#FB923C'
-      }
-    ];
+    return [];
   }
 
   private getDefaultFiles(): FileItem[] {
-    return [
-      {
-        id: 'fil-1',
-        name: 'Arquitectura_Servicios.md',
-        extension: 'md',
-        ownerName: 'Tú',
-        ownerAvatar: 'TU',
-        isCurrentUser: true,
-        lastModified: '18 oct 2026',
-        size: '14.2 KB',
-        sharedStatus: 'private',
-        selected: false
-      },
-      {
-        id: 'fil-2',
-        name: 'Notas_de_Investigacion.txt',
-        extension: 'txt',
-        ownerName: 'Tú',
-        ownerAvatar: 'TU',
-        isCurrentUser: true,
-        lastModified: '17 oct 2026',
-        size: '4.8 KB',
-        sharedStatus: 'shared',
-        sharedCount: 2,
-        selected: false
-      },
-      {
-        id: 'fil-3',
-        name: 'Plan_de_Estudio_2026.md',
-        extension: 'md',
-        ownerName: 'Prof. David Ruiz',
-        ownerAvatar: 'DR',
-        isCurrentUser: false,
-        lastModified: '15 oct 2026',
-        size: '22.5 KB',
-        sharedStatus: 'shared',
-        sharedCount: 5,
-        selected: false
-      },
-      {
-        id: 'fil-4',
-        name: 'Configuracion_Entorno.txt',
-        extension: 'txt',
-        ownerName: 'Tú',
-        ownerAvatar: 'TU',
-        isCurrentUser: true,
-        lastModified: '10 oct 2026',
-        size: '1.9 KB',
-        sharedStatus: 'private',
-        selected: false
-      }
-    ];
+    return [];
   }
 
   enterFolder(folder: FolderItem): void {
@@ -476,6 +390,52 @@ export class DocumentsComponent implements OnInit {
         );
       }
     });
+  }
+
+  renameFolder(folder: FolderItem): void {
+    const dialogRef = this.dialog.open(RenameDialog, {
+      width: '460px',
+      maxWidth: '95vw',
+      data: {
+        type: 'folder',
+        id: folder.id,
+        currentName: folder.name
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((renamed: boolean) => {
+      if (renamed) {
+        if (this.currentFolder()?.id === folder.id) {
+          this.currentFolder.update(curr => curr ? { ...curr, name: folder.name } : null);
+        }
+        this.loadContent(this.currentFolderId());
+      }
+    });
+  }
+
+  renameFile(file: FileItem): void {
+    const dialogRef = this.dialog.open(RenameDialog, {
+      width: '460px',
+      maxWidth: '95vw',
+      data: {
+        type: 'file',
+        id: file.id,
+        currentName: file.name,
+        extension: file.extension
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((renamed: boolean) => {
+      if (renamed) {
+        this.loadContent(this.currentFolderId());
+      }
+    });
+  }
+
+  renameCurrentFolder(): void {
+    const curr = this.currentFolder();
+    if (!curr) return;
+    this.renameFolder(curr);
   }
 
   previewFile(file: FileItem): void {
