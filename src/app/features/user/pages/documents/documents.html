@@ -7,8 +7,12 @@
           class="breadcrumb-item" 
           [class.primary]="i === 0"
           [class.active-crumb]="last"
+          [class.drag-over]="dragOverCrumbId() === (crumb.id ?? '__root__')"
           [disabled]="last"
           (click)="navigateToBreadcrumb(crumb, i)"
+          (dragover)="!last && onDragOverCrumb($event, crumb.id)"
+          (dragleave)="onDragLeaveCrumb()"
+          (drop)="!last && onDropOnCrumb($event, crumb)"
           [matTooltip]="!last ? 'Ir a ' + crumb.name : ''">
           @if (i === 0) {
             <mat-icon class="breadcrumb-icon">folder_shared</mat-icon>
@@ -31,6 +35,10 @@
           <button type="button" class="btn-navigate-up" (click)="renameCurrentFolder()" matTooltip="Renombrar esta carpeta">
             <mat-icon>edit</mat-icon>
             <span>Renombrar</span>
+          </button>
+          <button type="button" class="btn-navigate-up" (click)="moveCurrentFolder()" matTooltip="Mover esta carpeta a otra ubicación">
+            <mat-icon>drive_file_move</mat-icon>
+            <span>Mover</span>
           </button>
         }
       }
@@ -99,8 +107,16 @@
       @for (folder of folders(); track folder.id) {
         <div 
           class="folder-card" 
+          [class.drag-over]="dragOverFolderId() === folder.id"
+          [class.is-dragging]="draggedItem()?.item?.id === folder.id"
+          [attr.draggable]="folder.isCurrentUser !== false || folder.permission === 'edit'"
+          (dragstart)="onDragStart($event, 'folder', folder)"
+          (dragend)="onDragEnd()"
+          (dragover)="onDragOverFolder($event, folder)"
+          (dragleave)="onDragLeaveFolder(folder)"
+          (drop)="onDropOnFolder($event, folder)"
           (dblclick)="enterFolder(folder)" 
-          matTooltip="Doble clic para abrir carpeta">
+          matTooltip="Doble clic para abrir carpeta • Arrastra para mover">
           <div class="folder-icon-wrapper" [style.background-color]="folder.color + '22'" [style.color]="folder.color">
             <mat-icon>folder</mat-icon>
           </div>
@@ -131,6 +147,10 @@
               <button mat-menu-item (click)="renameFolder(folder)">
                 <mat-icon class="text-indigo-400">edit</mat-icon>
                 <span>Renombrar</span>
+              </button>
+              <button mat-menu-item (click)="openMoveDialog('folder', folder)">
+                <mat-icon class="text-sky-400">drive_file_move</mat-icon>
+                <span>Mover</span>
               </button>
             }
             @if (folder.isCurrentUser !== false) {
@@ -165,6 +185,10 @@
 
       <div class="table-actions">
         @if (selectedFilesCount > 0) {
+          <button type="button" class="btn-table-action !text-sky-400 !border-sky-500/40 hover:!bg-sky-500/10" (click)="moveSelectedFiles()">
+            <mat-icon>drive_file_move</mat-icon>
+            <span>Mover seleccionados ({{ selectedFilesCount }})</span>
+          </button>
           <button type="button" class="btn-table-action !text-rose-400 !border-rose-500/40 hover:!bg-rose-500/10" (click)="moveToTrashSelectedFiles()">
             <mat-icon>delete</mat-icon>
             <span>Mover a papelera ({{ selectedFilesCount }})</span>
@@ -202,7 +226,11 @@
           </thead>
           <tbody>
             @for (file of filteredFiles(); track file.id) {
-              <tr [class.selected]="file.selected">
+              <tr [class.selected]="file.selected"
+                  [class.is-dragging]="draggedItem()?.item?.id === file.id"
+                  [attr.draggable]="file.isCurrentUser || file.permission === 'edit'"
+                  (dragstart)="onDragStart($event, 'file', file)"
+                  (dragend)="onDragEnd()">
                 <td class="col-checkbox">
                   <input type="checkbox" 
                          [checked]="file.selected" 
@@ -285,6 +313,10 @@
                           <mat-icon class="text-indigo-400">edit</mat-icon>
                           <span>Renombrar</span>
                         </button>
+                        <button mat-menu-item (click)="openMoveDialog('file', file)">
+                          <mat-icon class="text-sky-400">drive_file_move</mat-icon>
+                          <span>Mover</span>
+                        </button>
                       }
 
                       @if (canEditTags(file)) {
@@ -336,7 +368,13 @@
     } @else {
       <div class="files-grid">
         @for (file of filteredFiles(); track file.id) {
-          <div class="file-grid-card" [class.selected]="file.selected">
+          <div 
+            class="file-grid-card" 
+            [class.selected]="file.selected"
+            [class.is-dragging]="draggedItem()?.item?.id === file.id"
+            [attr.draggable]="file.isCurrentUser || file.permission === 'edit'"
+            (dragstart)="onDragStart($event, 'file', file)"
+            (dragend)="onDragEnd()">
             <div class="grid-card-top">
               <span class="file-type-badge" [class.type-md]="file.extension === 'md'" [class.type-txt]="file.extension === 'txt'">
                 {{ file.extension.toUpperCase() }}
@@ -368,6 +406,10 @@
                   <button mat-menu-item (click)="renameFile(file)">
                     <mat-icon class="text-indigo-400">edit</mat-icon>
                     <span>Renombrar</span>
+                  </button>
+                  <button mat-menu-item (click)="openMoveDialog('file', file)">
+                    <mat-icon class="text-sky-400">drive_file_move</mat-icon>
+                    <span>Mover</span>
                   </button>
                 }
                 @if (canEditTags(file)) {

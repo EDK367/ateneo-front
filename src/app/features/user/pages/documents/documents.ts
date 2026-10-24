@@ -23,6 +23,7 @@ import { PreviewFileDialog } from './components/preview-file-dialog/preview-file
 import { ShareResourceDialog } from './components/share-resource-dialog/share-resource-dialog';
 import { EditTagsDialog } from './components/edit-tags-dialog/edit-tags-dialog';
 import { RenameDialog } from './components/rename-dialog/rename-dialog';
+import { MoveResourceDialog } from './components/move-resource-dialog/move-resource-dialog';
 
 export interface FolderItem {
   id: string;
@@ -81,6 +82,9 @@ export class DocumentsComponent implements OnInit {
   selectAll = signal<boolean>(false);
   downloadingFolderId = signal<string | null>(null);
   downloadingFileId = signal<string | null>(null);
+  draggedItem = signal<{ type: 'file' | 'folder'; item: FileItem | FolderItem } | null>(null);
+  dragOverFolderId = signal<string | null>(null);
+  dragOverCrumbId = signal<string | null | '__root__'>(null);
 
   filters = [
     { id: 'all', label: 'Todos' },
@@ -565,6 +569,187 @@ export class DocumentsComponent implements OnInit {
         `${folderName}_apuntes.md`,
         `# ${folderName}\n\nDocumento consolidado de la carpeta empaquetada.\n`
       );
+    }
+  }
+
+  openMoveDialog(type: 'file' | 'folder', item: FileItem | FolderItem): void {
+    const dialogRef = this.dialog.open(MoveResourceDialog, {
+      width: '560px',
+      maxWidth: '95vw',
+      data: {
+        type,
+        id: item.id,
+        name: item.name,
+        currentFolderId: this.currentFolderId(),
+        extension: (item as any).extension
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((res: any) => {
+      if (res?.moved) {
+        this.loadContent(this.currentFolderId());
+      }
+    });
+  }
+
+  moveCurrentFolder(): void {
+    const curr = this.currentFolder();
+    if (!curr) return;
+    this.openMoveDialog('folder', curr);
+  }
+
+  moveSelectedFiles(): void {
+    const selected = this.files().filter(f => f.selected);
+    if (selected.length === 0) return;
+    const dialogRef = this.dialog.open(MoveResourceDialog, {
+      width: '560px',
+      maxWidth: '95vw',
+      data: {
+        type: 'batch-files',
+        name: `${selected.length} archivos seleccionados`,
+        currentFolderId: this.currentFolderId(),
+        fileIds: selected.map(f => f.id)
+      }
+    });
+
+    dialogRef.afterClosed().subscribe((res: any) => {
+      if (res?.moved) {
+        this.selectAll.set(false);
+        this.loadContent(this.currentFolderId());
+      }
+    });
+  }
+
+  onDragStart(event: DragEvent, type: 'file' | 'folder', item: FileItem | FolderItem): void {
+    this.draggedItem.set({ type, item });
+    if (event.dataTransfer) {
+      event.dataTransfer.setData('text/plain', item.id);
+      event.dataTransfer.effectAllowed = 'move';
+    }
+  }
+
+  onDragEnd(): void {
+    this.draggedItem.set(null);
+    this.dragOverFolderId.set(null);
+    this.dragOverCrumbId.set(null);
+  }
+
+  onDragOverFolder(event: DragEvent, folder: FolderItem): void {
+    const dragged = this.draggedItem();
+    if (!dragged) return;
+    if (dragged.type === 'folder' && dragged.item.id === folder.id) {
+      return;
+    }
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    this.dragOverFolderId.set(folder.id);
+  }
+
+  onDragLeaveFolder(folder: FolderItem): void {
+    if (this.dragOverFolderId() === folder.id) {
+      this.dragOverFolderId.set(null);
+    }
+  }
+
+  onDropOnFolder(event: DragEvent, targetFolder: FolderItem): void {
+    event.preventDefault();
+    const dragged = this.draggedItem();
+    this.onDragEnd();
+
+    if (!dragged) return;
+    if (dragged.type === 'folder' && dragged.item.id === targetFolder.id) {
+      return;
+    }
+
+    if (dragged.type === 'folder') {
+      this.folderService.move(dragged.item.id, { newParentId: targetFolder.id }).subscribe({
+        next: (res) => {
+          this.notificationService.showSuccess(
+            `Carpeta "${res.name}" movida a "${targetFolder.name}"`,
+            'Carpeta movida'
+          );
+          this.loadContent(this.currentFolderId());
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Error al mover carpeta';
+          this.notificationService.showError(msg, 'Error al mover');
+        }
+      });
+    } else {
+      this.fileService.move(dragged.item.id, { folderId: targetFolder.id }).subscribe({
+        next: (res) => {
+          this.notificationService.showSuccess(
+            `Archivo "${res.name}" movido a "${targetFolder.name}"`,
+            'Archivo movido'
+          );
+          this.loadContent(this.currentFolderId());
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Error al mover archivo';
+          this.notificationService.showError(msg, 'Error al mover');
+        }
+      });
+    }
+  }
+
+  onDragOverCrumb(event: DragEvent, crumbId: string | null): void {
+    const dragged = this.draggedItem();
+    if (!dragged) return;
+    if (this.currentFolderId() === crumbId) return;
+    if (dragged.type === 'folder' && dragged.item.id === crumbId) return;
+
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+    this.dragOverCrumbId.set(crumbId ?? '__root__');
+  }
+
+  onDragLeaveCrumb(): void {
+    this.dragOverCrumbId.set(null);
+  }
+
+  onDropOnCrumb(event: DragEvent, crumb: { id: string | null; name: string }): void {
+    event.preventDefault();
+    const dragged = this.draggedItem();
+    this.onDragEnd();
+
+    if (!dragged) return;
+    if (this.currentFolderId() === crumb.id) return;
+    if (dragged.type === 'folder' && dragged.item.id === crumb.id) return;
+
+    const targetName = crumb.name;
+
+    if (dragged.type === 'folder') {
+      this.folderService.move(dragged.item.id, { newParentId: crumb.id }).subscribe({
+        next: (res) => {
+          this.notificationService.showSuccess(
+            `Carpeta "${res.name}" movida a "${targetName}"`,
+            'Carpeta movida'
+          );
+          this.loadContent(this.currentFolderId());
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Error al mover carpeta';
+          this.notificationService.showError(msg, 'Error al mover');
+        }
+      });
+    } else {
+      this.fileService.move(dragged.item.id, { folderId: crumb.id }).subscribe({
+        next: (res) => {
+          this.notificationService.showSuccess(
+            `Archivo "${res.name}" movido a "${targetName}"`,
+            'Archivo movido'
+          );
+          this.loadContent(this.currentFolderId());
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Error al mover archivo';
+          this.notificationService.showError(msg, 'Error al mover');
+        }
+      });
     }
   }
 

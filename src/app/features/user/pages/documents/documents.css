@@ -848,3 +848,32 @@
   color: var(--color-text-muted);
 }
 
+
+/* Drag and Drop styles */
+.folder-card[draggable="true"],
+.file-grid-card[draggable="true"],
+.files-table tbody tr[draggable="true"] {
+  cursor: grab;
+}
+
+.folder-card.is-dragging,
+.file-grid-card.is-dragging,
+.files-table tbody tr.is-dragging {
+  opacity: 0.45;
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+.folder-card.drag-over {
+  border-color: var(--color-primary) !important;
+  background-color: color-mix(in srgb, var(--color-primary) 18%, var(--color-bg-soft)) !important;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+.breadcrumb-item.drag-over {
+  border: 1px dashed var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  color: var(--color-primary) !important;
+  border-radius: 8px;
+}

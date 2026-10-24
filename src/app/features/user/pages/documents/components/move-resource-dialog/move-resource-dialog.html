@@ -1,0 +1,209 @@
+<div class="move-dialog-container">
+  <!-- Header -->
+  <div class="move-dialog-header">
+    <div class="header-left">
+      <div 
+        class="header-icon-wrapper"
+        [ngClass]="data.type === 'folder' ? 'folder-theme' : 'file-theme'">
+        <mat-icon>{{ data.type === 'folder' ? 'drive_file_move' : 'drive_file_move_rtl' }}</mat-icon>
+      </div>
+      <div class="header-titles">
+        <h2 class="dialog-title">
+          @if (data.type === 'folder') {
+            Mover Carpeta
+          } @else if (data.type === 'batch-files') {
+            Mover Archivos Seleccionados
+          } @else {
+            Mover Archivo
+          }
+        </h2>
+        <p class="dialog-subtitle" [title]="data.name">
+          {{ data.name }}
+        </p>
+      </div>
+    </div>
+    <button type="button" mat-icon-button (click)="close()" class="btn-close">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Breadcrumbs & Quick Nav -->
+  <div class="dialog-nav-bar">
+    <div class="dialog-breadcrumbs">
+      @for (crumb of breadcrumbs; track $index; let last = $last; let i = $index) {
+        <button 
+          type="button" 
+          class="dialog-crumb-btn"
+          [class.active-crumb]="last"
+          [disabled]="last || loadingFolders"
+          (click)="navigateToCrumb(crumb, i)">
+          @if (i === 0) {
+            <mat-icon class="crumb-icon">folder_shared</mat-icon>
+          } @else {
+            <mat-icon class="crumb-icon">folder</mat-icon>
+          }
+          <span>{{ crumb.name }}</span>
+        </button>
+        @if (!last) {
+          <mat-icon class="crumb-sep">chevron_right</mat-icon>
+        }
+      }
+    </div>
+
+    @if (breadcrumbs.length > 1) {
+      <button 
+        type="button" 
+        class="btn-nav-up" 
+        [disabled]="loadingFolders" 
+        (click)="navigateUp()"
+        matTooltip="Subir nivel">
+        <mat-icon>arrow_upward</mat-icon>
+        <span>Subir</span>
+      </button>
+    }
+  </div>
+
+  <!-- Filter Input -->
+  <div class="dialog-search-bar">
+    <mat-icon class="search-mini-icon">search</mat-icon>
+    <input 
+      type="text" 
+      [(ngModel)]="searchQuery" 
+      placeholder="Filtrar carpetas en este nivel..." 
+      class="dialog-search-input" />
+    @if (searchQuery) {
+      <button type="button" class="btn-clear-search" (click)="searchQuery = ''">
+        <mat-icon>close</mat-icon>
+      </button>
+    }
+  </div>
+
+  <!-- Folder Explorer Area -->
+  <div class="folder-list-container">
+    @if (loadingFolders) {
+      <div class="loading-state">
+        <mat-spinner diameter="32"></mat-spinner>
+        <span>Cargando carpetas...</span>
+      </div>
+    } @else {
+      <!-- Current level root option -->
+      <div 
+        class="folder-item-row"
+        [class.selected]="selectedTargetId === currentBrowsingFolderId"
+        (click)="selectCurrentLevel()">
+        <div class="folder-row-left">
+          <div class="folder-item-icon level-icon">
+            <mat-icon>{{ currentBrowsingFolderId === null ? 'home_work' : 'folder_open' }}</mat-icon>
+          </div>
+          <div class="folder-item-details">
+            <span class="folder-item-name">
+              {{ currentBrowsingFolderId === null ? 'Mi Unidad (Nivel Raíz)' : 'Esta carpeta actual' }}
+            </span>
+            <span class="folder-item-sub">Mover directamente aquí</span>
+          </div>
+        </div>
+        <div class="folder-row-right">
+          @if (selectedTargetId === currentBrowsingFolderId) {
+            <span class="badge-selected">
+              <mat-icon>check_circle</mat-icon>
+              <span>Seleccionado</span>
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="list-divider"></div>
+
+      <!-- Subfolders -->
+      @for (folder of filteredFolders(); track folder._id) {
+        <div 
+          class="folder-item-row"
+          [class.selected]="selectedTargetId === folder._id"
+          [class.disabled]="isFolderDisabled(folder)"
+          (click)="selectTarget(folder, $event)">
+          <div class="folder-row-left">
+            <div class="folder-item-icon">
+              <mat-icon>folder</mat-icon>
+            </div>
+            <div class="folder-item-details">
+              <span class="folder-item-name">{{ folder.name }}</span>
+              <span class="folder-item-sub">
+                {{ folder.itemCount ?? 0 }} {{ (folder.itemCount === 1) ? 'elemento' : 'elementos' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="folder-row-right">
+            @if (isFolderDisabled(folder)) {
+              <span class="badge-disabled">
+                <mat-icon>block</mat-icon>
+                <span>No permitido</span>
+              </span>
+            } @else {
+              @if (selectedTargetId === folder._id) {
+                <span class="badge-selected">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>Seleccionado</span>
+                </span>
+              }
+              <button 
+                type="button" 
+                class="btn-open-folder" 
+                (click)="enterFolder(folder, $event)"
+                matTooltip="Abrir y ver subcarpetas">
+                <mat-icon>chevron_right</mat-icon>
+              </button>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="empty-folder-state">
+          <mat-icon>folder_open</mat-icon>
+          <span>No hay subcarpetas adicionales en este nivel</span>
+        </div>
+      }
+    }
+  </div>
+
+  <!-- Target Summary Alert -->
+  <div class="target-summary-box" [class.is-warning]="isCurrentLocation()">
+    <div class="target-summary-left">
+      <mat-icon class="target-icon">
+        {{ isCurrentLocation() ? 'info' : 'folder_special' }}
+      </mat-icon>
+      <div class="target-text">
+        <span class="target-label">Destino de movimiento:</span>
+        <strong class="target-name">{{ selectedTargetName }}</strong>
+      </div>
+    </div>
+    @if (isCurrentLocation()) {
+      <span class="location-warning-text">El elemento ya se encuentra aquí</span>
+    }
+  </div>
+
+  <!-- Footer Actions -->
+  <div class="move-dialog-footer">
+    <button type="button" mat-button (click)="close()" class="btn-cancel" [disabled]="moving">
+      Cancelar
+    </button>
+    <button 
+      type="button" 
+      mat-flat-button 
+      color="primary" 
+      class="btn-move"
+      [disabled]="isMoveDisabled()"
+      (click)="executeMove()">
+      @if (moving) {
+        <div class="flex items-center gap-2">
+          <mat-spinner diameter="18"></mat-spinner>
+          <span>Moviendo...</span>
+        </div>
+      } @else {
+        <div class="flex items-center gap-1.5">
+          <mat-icon>drive_file_move</mat-icon>
+          <span>Mover aquí</span>
+        </div>
+      }
+    </button>
+  </div>
+</div>
