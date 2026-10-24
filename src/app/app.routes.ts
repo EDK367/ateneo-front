@@ -70,6 +70,11 @@ export const routes: Routes = [
           import('./features/admin/pages/reports/reports').then(m => m.Reports)
       },
       {
+        path: 'reports/rubric',
+        loadComponent: () =>
+          import('./features/admin/pages/reports/reports').then(m => m.Reports)
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/admin/pages/profile/profile').then(m => m.Profile)
